@@ -6,7 +6,7 @@
 
 
 #ifndef NGX_COMPILER
-#define NGX_COMPILER  "gcc 5.4.0 (GCC) "
+#define NGX_COMPILER  "gcc 11.2.0 (Ubuntu 11.2.0-19ubuntu1) "
 #endif
 
 
@@ -224,7 +224,7 @@
 
 
 #ifndef NGX_SYS_NERR
-#define NGX_SYS_NERR  135
+#define NGX_SYS_NERR  41
 #endif
 
 
@@ -459,6 +459,6 @@
 
 
 #ifndef NGX_GROUP
-#define NGX_GROUP  "nobody"
+#define NGX_GROUP  "nogroup"
 #endif
 

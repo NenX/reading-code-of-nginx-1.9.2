@@ -1,6 +1,6 @@
 
 CC =	cc
-CFLAGS =  -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g 
+CFLAGS =  -pipe  -O -W -Wall -Wpointer-arith -Wno-unused -Wno-deprecated-declarations -g 
 CPP =	cc -E
 LINK =	$(CC)
 
@@ -362,7 +362,7 @@ objs/nginx:	objs/src/core/nginx.o \
 	objs/addon/src/ngx_http_redis2_reply.o \
 	objs/addon/src/ngx_http_redis2_util.o \
 	objs/ngx_modules.o \
-	-lpthread -lpthread -lcrypt -lpcre -lcrypto -lcrypto -lz
+	-lpthread -lcrypt -lpcre -lcrypto -lcrypto -lz
 	
 
 
