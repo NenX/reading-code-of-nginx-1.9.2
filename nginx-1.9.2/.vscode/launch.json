@@ -8,12 +8,13 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/nginx-1.9.2/objs/nginx",
+            "program": "${workspaceFolder}/objs/nginx",
             "args": [
             ],
             "sourceFileMap":{
-                "src": "${workspaceFolder}/nginx-1.9.2/src"
+                "src": "${workspaceFolder}/src"
             },
+            "preLaunchTask": "build",
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

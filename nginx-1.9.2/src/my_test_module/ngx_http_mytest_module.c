@@ -33,7 +33,7 @@ static ngx_int_t ngx_http_mytest_handler(ngx_http_request_t *r)
   
     // Send response header  
     ngx_str_t type = ngx_string("text/plain");  
-    ngx_str_t response = ngx_string("Hello World!!!11111111111");  
+    ngx_str_t response = ngx_string("Hello World!!!44444");  
     r->headers_out.status = NGX_HTTP_OK;  
     r->headers_out.content_length_n = response.len;  
     r->headers_out.content_type = type;  
