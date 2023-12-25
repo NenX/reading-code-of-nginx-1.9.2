@@ -9,9 +9,13 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/nginx-1.9.2/objs/nginx",
-            "args": [],
+            "args": [
+            ],
+            "sourceFileMap":{
+                "src": "${workspaceFolder}/nginx-1.9.2/src"
+            },
             "stopAtEntry": false,
-            "cwd": "${fileDirname}",
+            "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",

@@ -177,7 +177,7 @@ esac
 CFLAGS="$CFLAGS -Wno-deprecated-declarations"
 
 # debug
-CFLAGS="$CFLAGS -g"
+CFLAGS="$CFLAGS -g -O0 -gstabs"
 
 # DragonFly's gcc3 generates DWARF
 #CFLAGS="$CFLAGS -g -gstabs"
