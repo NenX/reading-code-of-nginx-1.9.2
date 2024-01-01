@@ -1,17 +1,17 @@
 /*
-�����дnginxģ���ʱ�򣬷���worker�������Ǵ�ӡ:
+最近编写nginx模块的时候，发现worker进程老是打印:
 2025/02/13 13:11:03[                 ngx_signal_handler,   927]  [notice] 32580#32580: signal 17 (SIGCHLD) received
-Ϊ�˶�λ
-nginx���÷���
+为了定位
+nginx配置方法
 worker_rlimit_core  100M;
 working_directory   /path/to/cores/;
-ע������һ��Ҫ��֤/pathĿ¼�ж�дȨ�ޣ����򲻻����coredump�ļ�
+注意这里一定要保证/path目录有读写权限，否则不会产生coredump文件
 
 
-Ҳ���Խ���ϵͳ���ã�������:
-ulimit -c 1024(�����ļ���С) ����unlimited �����Ҫע�⣬����������ƣ�coredump�ļ���ܴ󣬳Ե��ܶ���̿ռ�
+也可以进行系统配置，见下面:
+ulimit -c 1024(限制文件大小) 或者unlimited ，这个要注意，如果不做限制，coredump文件会很大，吃掉很多磁盘空间
 
-cat /proc/sys/kernel/core_pattern �鿴coredump�ļ����·��
+cat /proc/sys/kernel/core_pattern 查看coredump文件存放路径
 
 
 echo 0 > /proc/sys/kernel/core_uses_pid
@@ -20,20 +20,20 @@ echo /var/corefile/core-%e > /path/core_pattern
 echo 0 > /proc/sys/kernel/core_uses_pid
 echo /var/corefile/core-%e > /proc/sys/kernel/core_pattern
 
-//corefileЯ�����̺�
+//corefile携带进程号
 echo 1 > /proc/sys/kernel/core_uses_pid
 echo /var/corefile/core-%e-%p-%t > /proc/sys/kernel/core_pattern
 
-�ġ�gdb����codedump:
+四、gdb调试codedump:
 gdb programfile codedumpfile
 (gdb) bt
 
 
 
-��������ִ�к󣬿��Ա�֤coredump�ļ�Ϊcore-nginx
+上面两句执行后，可以保证coredump文件为core-nginx
 
-ִ�гɹ�ֻ�д�ӡ��:Segmentation fault (core dumped)�Ż���coredump�ļ�����
-��ӡ:Segmentation fault û�д�ӡ(core dumped)�򲻻����coredump�ļ�
+执行成功只有打印了:Segmentation fault (core dumped)才会有coredump文件产生
+打印:Segmentation fault 没有打印(core dumped)则不会参数coredump文件
 
 
 
@@ -50,50 +50,50 @@ Segmentation fault (core dumped)
 root@root:/var/yyz# 
 
 $grep signal error.log
-2012/12/24 16:39:56 [alert] 13661#0: worker process 13666 exited on signal 11  û��coredump�ļ�����
+2012/12/24 16:39:56 [alert] 13661#0: worker process 13666 exited on signal 11  没有coredump文件产生
 
-����ڽ����˳�����coredump�ļ������������������־��
+如果在进程退出后，有coredump文件产生，则会打出如下日志：
 $grep signal error.log
 2012/12/24 16:39:56 [alert] 13661#0: worker process 13666 exited on signal 11 (core dumped) 
 
-�ġ�gdb����codedump:
+四、gdb调试codedump:
 gdb programfile codedumpfile
 (gdb) bt
 
 
 
 
-2.core�ļ������ƺ�����·��
+2.core文件的名称和生成路径
 ----------------------------
-core�ļ�����·��:
-�����ִ���ļ����������ͬһ·���¡�
- ��ϵͳ���ɵ�core�ļ����������κ���չ���ƣ���ȫ������Ϊcore���µ�core�ļ����ɽ�����ԭ����core�ļ���
+core文件生成路径:
+输入可执行文件运行命令的同一路径下。
+ 若系统生成的core文件不带其他任何扩展名称，则全部命名为core。新的core文件生成将覆盖原来的core文件。
 
-1��/proc/sys/kernel/core_uses_pid���Կ���core�ļ����ļ������Ƿ�����pid��Ϊ��չ���ļ�����Ϊ1����ʾ����pid��Ϊ��չ�������ɵ�core�ļ���ʽΪcore.xxxx��Ϊ0���ʾ���ɵ�core�ļ�ͬһ����Ϊcore��
- ��ͨ�����������޸Ĵ��ļ���
+1）/proc/sys/kernel/core_uses_pid可以控制core文件的文件名中是否添加pid作为扩展。文件内容为1，表示添加pid作为扩展名，生成的core文件格式为core.xxxx；为0则表示生成的core文件同一命名为core。
+ 可通过以下命令修改此文件：
 echo "1" > c
 
-2��proc/sys/kernel/core_pattern���Կ���core�ļ�����λ�ú��ļ�����ʽ��
- ��ͨ�����������޸Ĵ��ļ���
-echo "/corefile/core-%e-%p-%t" > core_pattern�����Խ�core�ļ�ͳһ���ɵ�/corefileĿ¼�£��������ļ���Ϊcore-������-pid-ʱ���
- �����ǲ����б�:
- %p - insert pid into filename ����pid
- %u - insert current uid into filename ���ӵ�ǰuid
- %g - insert current gid into filename ���ӵ�ǰgid
- %s - insert signal that caused the coredump into the filename ���ӵ��²���core���ź�
-%t - insert UNIX time that the coredump occurred into filename ����core�ļ�����ʱ��unixʱ��
-%h - insert hostname where the coredump happened into filename ����������
-%e - insert coredumping executable name into filename ����������
+2）proc/sys/kernel/core_pattern可以控制core文件保存位置和文件名格式。
+ 可通过以下命令修改此文件：
+echo "/corefile/core-%e-%p-%t" > core_pattern，可以将core文件统一生成到/corefile目录下，产生的文件名为core-命令名-pid-时间戳
+ 以下是参数列表:
+ %p - insert pid into filename 添加pid
+ %u - insert current uid into filename 添加当前uid
+ %g - insert current gid into filename 添加当前gid
+ %s - insert signal that caused the coredump into the filename 添加导致产生core的信号
+%t - insert UNIX time that the coredump occurred into filename 添加core文件生成时的unix时间
+%h - insert hostname where the coredump happened into filename 添加主机名
+%e - insert coredumping executable name into filename 添加命令名
 
-��ϸ�����ο���http://www.nginx.cn/1521.html
+详细出处参考：http://www.nginx.cn/1521.html
 
-�ġ�gdb����codedump:
+四、gdb调试codedump:
 gdb programfile codedumpfile
 (gdb) bt
 
 
 
-��core-nginx������nginx��ִ���ļ�ͬһĿ¼����
+把core-nginx拷贝到nginx可执行文件同一目录下面
 
 root@root:/var/yyz/corefile# gdb --core core-nginx 
 GNU gdb (GDB) 7.1
@@ -118,8 +118,8 @@ Reading symbols from /var/yyz/corefile/nginx...done.
 (gdb) bt
 #0  0x0805106a in ngx_vslprintf (
     buf=0xbff2d720 "TTP_SERVER_REWRITE_PHASE)\nent_del_timer,    39]  [debug] 32581#32581: *1 < ngx_http_process_request,  2013>  event timer del: 3: 4256695641\ncess_request_headers,  1412]", 
-    last=0xbff2de90 "{�|\034v�\016\b|�\017\b��\016\b\b���o\a\b\b", fmt=<value optimized out>, 
-    args=0xbff2ded4 "�T\017\b\f\b��\016\b|�\017\b��\016\b\b��\230s\a\b��\016\b`�\v\bl��\003��\016\b|�\017\b��\016\b(��\021\a\b��\016\b\214�\017\b��\016\b\b\032\020\b\b\032\020\b\220�\021\bH��\022\a\b��\016\b��\r\b3H\f\b\b\032\020\b\220�\021\b��\016\b���8\225\a\b��\016\b��\021\b��Z�\020(") at src/core/ngx_string.c:332
+    last=0xbff2de90 "{穦\034v衆016\b|蟎017\b匦\016\b\b唑岿o\a\b\b", fmt=<value optimized out>, 
+    args=0xbff2ded4 "琓\017\b\f\b匦\016\b|蟎017\b匦\016\b\b唑縗230s\a\b匦\016\b`黒v\bl赇\003匦\016\b|蟎017\b匦\016\b(唑繝\021\a\b匦\016\b\214蟎017\b匦\016\b\b\032\020\b\b\032\020\b\220賊021\bH唑烤\022\a\b匦\016\b孛\r\b3H\f\b\b\032\020\b\220賊021\b匦\016\b�唑�8\225\a\b匦\016\bべ\021\b赣Z穃020(") at src/core/ngx_string.c:332
 #1  0x0804cc3d in ngx_log_error_core (level=8, log=0x80e6c88, filename=0x80c3a60 "ngx_http_core_find_config_phase", lineno=1865, err=0, fmt=0x80c3828 "find config phase: %ui (%s), uri:%V")
     at src/core/ngx_log.c:229
 #2  0x08076ff9 in ngx_http_core_find_config_phase (r=0x80ed0d8, ph=0x80fcf8c) at src/http/ngx_http_core_module.c:1863
@@ -145,11 +145,11 @@ Reading symbols from /var/yyz/corefile/nginx...done.
 
 
 
-��������һ·�Ų���ȥ������Nginx������־�����д�����http 504 err code
+按照流程一路排查下去，发现Nginx访问日志里面有大量的http 504 err code
 
-tail -f /var/log/messages  ����demsg�鿴�Ƿ��жδ���
+tail -f /var/log/messages  或者demsg查看是否有段错误
 
-ͬʱ���ִ��������ƴ�����Ϣ
+同时出现大量的类似错误信息
 
 nginx[1234]: segfault at 0000000000000008 rip 000000000043edf8 rsp 00007fff34a21fa0 error 4
 
@@ -168,30 +168,30 @@ nginx[1234]: segfault at 0000000000000008 rip 000000000043edf8 rsp 00007fff34a21
 
 
 
-Nginx���ⶨλ֮��ؽ����쳣�˳�
+Nginx问题定位之监控进程异常退出
 
 Dec 25th, 2012 nginx  Posted by lifeibo | Comments 
 
 
-nginx�����й������Ƿ��ȶ����Ƿ����쳣�˳����������ܽἸ��ƽʱ���õ���С���ɡ�
+nginx在运行过程中是否稳定，是否有异常退出过？这里总结几项平时会用到的小技巧。
 
-1. ��error.log�в鿴�Ƿ���signal�����У�����signal�Ƕ��١�
+1. 在error.log中查看是否有signal项，如果有，看看signal是多少。
 
-���磬����һ���쳣�˳��������
+比如，这是一个异常退出的情况：
 $grep signal error.log
 
 2012/12/24 16:39:56 [alert] 13661#0: worker process 13666 exited on signal 11
 
 
-����ڽ����˳�����coredump�ļ������������������־��
+如果在进程退出后，有coredump文件产生，则会打出如下日志：
 $grep signal error.log
 
 2012/12/24 16:39:56 [alert] 13661#0: worker process 13666 exited on signal 11 (core dumped) 
 
 
-2. �򵥷�ʽ�������̺��Ƿ�����
+2. 简单方式，看进程号是否连续
 
-һ����˵����worker��������ʱ������̺Ŷ��������ģ��������Ǻ�Զ��������н����˳�������̺žͲ�һ��������
+一般来说，在worker进程启动时，其进程号都是连续的（至少相差不是很远），如果有进程退出，其进程号就不一定连续。
 $ps aux | grep nginx
 
 lizi      7223  0.0  0.0  74844  2024 ?        Ss   13:32   0:00 nginx: master process ./nginx
@@ -207,8 +207,8 @@ lizi      7300  0.0  0.0  78856  5468 ?        S    13:33   0:00 nginx: worker p
 lizi      7301  0.0  0.0  78856  5452 ?        S    13:33   0:00 nginx: worker process
 
 
-���Կ�����10��worker���̣�������7292��7301�����̺�������
- ���£�
+可以看到，10个worker进程，基本从7292到7301，进程号连续。
+ 如下：
 $ps aux | grep nginx
 
 nobody    9492 16659 26 09:18 ?        01:10:41 nginx: worker process
@@ -218,16 +218,16 @@ nobody   19344 16659 24 10:18 ?        00:50:54 nginx: worker process
 nobody    25447 16659 28 07:41 ?        01:43:56 nginx: worker process 
 
 
-���̺��Ѳ���������˵��nginx�����й��������쳣�˳���
+进程号已不再连续，说明nginx可能有工作进程异常退出。
 
-3. �鿴dmesgϵͳ��Ϣ��
+3. 查看dmesg系统消息。
 
-��man�ֲ���������ô����dmesg�ģ�
+在man手册里面是这么描述dmesg的：
 DESCRIPTION
 dmesg is used to examine or control the kernel ring buffer.
 
 
-�鿴dmesg�Ǽ��ϵͳ����״̬�ĳ����ֶΣ�ͨ�����԰������Ų�ܶ����⡣��Ȼ������н����쳣�˳���dmesgҲ���Կ�����
+查看dmesg是检测系统运行状态的常用手段，通常可以帮我们排查很多问题。当然，如果有进程异常退出，dmesg也可以看到。
 $dmesg
 
 nginx[24721]: segfault at 0000000000000001 rip 0000000000000001 rsp 00007ffff58d8180 error 14
@@ -235,34 +235,32 @@ nginx[1729]: segfault at 0000000000000190 rip 00000000004c2d27 rsp 00007ffff58d8
 nginx[22002]: segfault at ffffffffffffffff rip 000000001c959744 rsp 00007fff43caac18 error 6
 
 
-rip��ʾ�����˳�ʱ��ip�Ĵ������ݣ���û��core�ļ�����ʱ���ɸ��ݴ�ֵ�Լ�����������ҳ���core��λ�á�
+rip表示程序退出时的ip寄存器内容，当没有core文件可用时，可根据此值以及反汇编来查找程序core的位置。
 
-4. ��coredump�ļ���
+4. 打开coredump文件。
 
-һ�������ڳ�������ǰ��ͨ��ulimit -c ulimited������core�ļ��Ĵ�С��Ҳ�����޸�/etc/security/limits.conf�ļ�������������Ϣ��
+一般我们在程序启动前，通过ulimit -c ulimited来设置core文件的大小，也可以修改/etc/security/limits.conf文件，添加如下信息：
 admin               soft    core            1000000
 admin               hard    core            1000000
 
 
-Ҳ����ֱ���޸�nginx�������ļ����������������
+也可以直接修改nginx的配置文件，添加如下配置项：
 worker_rlimit_core 10000m;
 
 
-����ʱ����limitϵͳ�У�Ĭ��coredump�ļ���д������nginxʱ��Ŀ¼�����nginx������ʱworker���̵��û�û��Ȩ��д�����Ŀ¼���������쳣�˳�ʱ�����޷�����coredump�ļ�������nginx�����󣬻������ɱ��������������޷�֪��nginx������ʱ��Ŀ¼��Ҳ���޷�֪��core�ļ���Ŀ¼�����������������������⣬ͨ����־�鿴����coredump�����ˣ���ȴ�Ҳ���coredump���ļ���
+而此时，在limit系统中，默认coredump文件会写在启动nginx时的目录，如果nginx在启动时worker进程的用户没有权限写到这个目录，进程在异常退出时，就无法产生coredump文件。由于nginx启动后，或者是由别人启动，我们无法知道nginx在启动时的目录，也就无法知道core文件的目录。我曾经碰到过这样的问题，通过日志查看，是coredump出来了，但却找不到coredump的文件。
 
-������һ��С���ɣ��鿴/proc/pid/cwd���Կ������̵Ĺ���Ŀ¼����core�ļ�������ڹ���Ŀ¼��
+这里有一个小技巧，查看/proc/pid/cwd可以看到进程的工作目录，而core文件会产生在工作目录。
 
-nginx�������ù���Ŀ¼���ı�Ĭ�ϵĹ���Ŀ¼�����ǣ�������Ҫ����working_directoryΪĿ�Ĺ���Ŀ¼�����ǵ�core�ļ�Ҳ����������Ŀ¼��
+nginx可以配置工作目录来改变默认的工作目录，于是，我们需要配置working_directory为目的工作目录，我们的core文件也会产生在这个目录。
 working_directory /path/to/core;
 
 
-working_directory�����ʱָ����--prefix=/path��ͬ�����߱�ʾ�������ļ������õ����·���������ľ���·�������ԣ�working_directory����Ӱ�쵽���õ�����·������������Ϊ�˸ı�core�ļ���·������Ȼnginx������д���Ŀ¼��Ȩ�ޣ������޷�core������
+working_directory与编译时指定的--prefix=/path不同，后者表示在配置文件中所用的相对路径所生产的绝对路径。所以，working_directory不会影响到配置的引用路径，而仅仅是为了改变core文件的路径，当然nginx必须有写这个目录的权限，否则无法core出来。
 
-���ԣ�������Ƽ��������ǣ�����worker_rlimit_core��working_directory������ָ��������Ͳ���Ҫ�޸Ĳ���ϵͳ�Ĳ����Ϳ�������core�����ˡ�
+所以，这里，我推荐的做法是，配置worker_rlimit_core与working_directory这两个指令，这样，就不需要修改操作系统的参数就可以正常core出来了。
 
-������Щ��ƽʱ�õ���һЩ���ɵ��ܽᣬ�����ÿ��ģ�
-
-
+以上这些是平时用到的一些技巧的总结，大家玩得开心！
 
 
 
@@ -270,15 +268,17 @@ working_directory�����ʱָ����--prefix=/path��ͬ�����߱�ʾ�������ļ������õ���
 
 
 
-Linux�����¶δ���Ĳ���ԭ�򼰵��Է���С��
-�����Linux��������C������Ŀ����������һ��ԭ����Ŀ����֮�Ͻ��ж��ο�����������Ŀ�����Ӵ��ӣ������˲������⣬����������ࡢ��
-��ʱ�����������������ġ��δ��󡱣�Segmentation Fault������˻���ϵͳѧϰ��һ�£������Linux�����µĶδ�������С�ᣬ�����Ժ�
-ͬ��������Ų������� 
 
-1. �δ�����ʲô 
 
-һ�仰��˵���δ�����ָ���ʵ��ڴ泬����ϵͳ������������趨���ڴ�ռ䣬��������˲����ڵ��ڴ��ַ��������ϵͳ�������ڴ��ַ��������
-ֻ�����ڴ��ַ�ȵ������������һ�����ڡ��δ��󡱵�׼ȷ���壨�ο�Answers.com���� 
+Linux环境下段错误的产生原因及调试方法小结
+最近在Linux环境下做C语言项目，由于是在一个原有项目基础之上进行二次开发，而且项目工程庞大复杂，出现了不少问题，其中遇到最多、花
+费时间最长的问题就是著名的“段错误”（Segmentation Fault）。借此机会系统学习了一下，这里对Linux环境下的段错误做个小结，方便以后
+同类问题的排查与解决。 
+
+1. 段错误是什么 
+
+一句话来说，段错误是指访问的内存超出了系统给这个程序所设定的内存空间，例如访问了不存在的内存地址、访问了系统保护的内存地址、访问了
+只读的内存地址等等情况。这里贴一个对于“段错误”的准确定义（参考Answers.com）： 
 
 A segmentation fault (often shortened to segfault) is a particular error condition that can occur during the operation of computer 
 software. In short, a segmentation fault occurs when a program attempts to access a memory location that it is not allowed to access, 
@@ -292,10 +292,10 @@ still have segmentation at some logical level although paging is used as the mai
 On Unix-like operating systems, a process that accesses invalid memory receives the SIGSEGV signal. On Microsoft Windows, a process 
 that accesses invalid memory receives the STATUS_ACCESS_VIOLATION exception. 
 
-2. �δ��������ԭ�� 
-2.1 ���ʲ����ڵ��ڴ��ַ 
+2. 段错误产生的原因 
+2.1 访问不存在的内存地址 
 
-���ƴ��� ��������:
+复制代码 代码如下:
 
 
 #include<stdio.h> 
@@ -307,9 +307,9 @@ int *ptr = NULL;
 } 
 
 
-2.2 ����ϵͳ�������ڴ��ַ 
+2.2 访问系统保护的内存地址 
 
-���ƴ��� ��������:
+复制代码 代码如下:
 
 
 #include<stdio.h> 
@@ -321,9 +321,9 @@ int *ptr = (int *)0;
 } 
 
 
-2.3 ����ֻ�����ڴ��ַ 
+2.3 访问只读的内存地址 
 
-���ƴ��� ��������:
+复制代码 代码如下:
 
 
 #include<stdio.h> 
@@ -336,9 +336,9 @@ strcpy(ptr, "TEST");
 } 
 
 
-2.4 ջ��� 
+2.4 栈溢出 
 
-���ƴ��� ��������:
+复制代码 代码如下:
 
 
 #include<stdio.h> 
@@ -349,25 +349,25 @@ main();
 } 
 
 
-�ȵ�����ԭ�� 
+等等其他原因。 
 
-3. �δ�����Ϣ�Ļ�ȡ 
-�������δ���ʱ����ʾ��Ϣ���٣������м��ֲ鿴�δ���ķ�����Ϣ��;���� 
+3. 段错误信息的获取 
+程序发生段错误时，提示信息很少，下面有几种查看段错误的发生信息的途径。 
 
 3.1 dmesg 
-dmesg������Ӧ�ó���crash��ʱ����ʾ�ں��б���������Ϣ��������ʾ��ͨ��dmesg������Բ鿴�����δ���ĳ������ơ�����δ�������
-�ڴ��ַ��ָ��ָ���ַ����ջָ���ַ��������롢����ԭ��ȡ��Գ���2.3Ϊ���� 
+dmesg可以在应用程序crash掉时，显示内核中保存的相关信息。如下所示，通过dmesg命令可以查看发生段错误的程序名称、引起段错误发生的
+内存地址、指令指针地址、堆栈指针地址、错误代码、错误原因等。以程序2.3为例： 
 
 panfeng@ubuntu:~/segfault$ dmesg 
 [ 2329.479037] segfault3[2700]: segfault at 80484e0 ip 00d2906a sp bfbbec3c error 7 in libc-2.10.1.so[cb4000+13e000] 
 3.2 -g 
-ʹ��gcc��������Դ��ʱ������-g��������������ʹ�����ɵĶ������ļ��м����������gdb���Ե�������Ϣ���Գ���2.3Ϊ���� 
+使用gcc编译程序的源码时，加上-g参数，这样可以使得生成的二进制文件中加入可以用于gdb调试的有用信息。以程序2.3为例： 
 
 panfeng@ubuntu:~/segfault$ gcc -g -o segfault3 segfault3.c 
 3.3 nm 
-ʹ��nm�����г��������ļ��еķ��ű����������ŵ�ַ���������͡��������ȣ��������԰�����λ�����﷢���˶δ����Գ���2.3Ϊ���� 
+使用nm命令列出二进制文件中的符号表，包括符号地址、符号类型、符号名等，这样可以帮助定位在哪里发生了段错误。以程序2.3为例： 
 
-���ƴ��� ��������:
+复制代码 代码如下:
 
 
 panfeng@ubuntu:~/segfault$ nm segfault3 
@@ -409,10 +409,10 @@ U memcpy@@GLIBC_2.0
 
 
 3.4 ldd 
-ʹ��ldd����鿴�����Ƴ���Ĺ������ӿ�����������������ơ���ʼ��ַ����������ȷ���δ��󵽵��Ƿ��������Լ��ĳ����л��������Ĺ���
-���С��Գ���2.3Ϊ���� 
+使用ldd命令查看二进制程序的共享链接库依赖，包括库的名称、起始地址，这样可以确定段错误到底是发生在了自己的程序中还是依赖的共享
+库中。以程序2.3为例： 
 
-���ƴ��� ��������:
+复制代码 代码如下:
 
 
 panfeng@ubuntu:~/segfault$ ldd ./segfault3 
@@ -421,22 +421,22 @@ libc.so.6 => /lib/tls/i686/cmov/libc.so.6 (0x00675000)
 /lib/ld-linux.so.2 (0x00482000) 
 
 
-4. �δ���ĵ��Է��� 
-4.1 ʹ��printf�����Ϣ 
-����ǿ�����򵥵������ܶ������ʮ����Ч�ĵ��Է�ʽ��Ҳ������˵�ǳ���Ա�õ����ĵ��Է�ʽ������˵�������ڳ������Ҫ���븽��������
-printf���������Ϣ���������Ը��ٲ���ӡ���δ����ڴ����п��ܳ��ֵ�λ�á� 
+4. 段错误的调试方法 
+4.1 使用printf输出信息 
+这个是看似最简单但往往很多情况下十分有效的调试方式，也许可以说是程序员用的最多的调试方式。简单来说，就是在程序的重要代码附近加上像
+printf这类输出信息，这样可以跟踪并打印出段错误在代码中可能出现的位置。 
 
-Ϊ�˷���ʹ�����ַ���������ʹ����������ָ��#ifdef DEBUG��#endif��printf�����������������ڳ������ʱ���������-DDEBUG�������ܲ鿴��
-����Ϣ�����򲻼Ӹò����Ͳ�����ʾ������Ϣ�� 
+为了方便使用这种方法，可以使用条件编译指令#ifdef DEBUG和#endif把printf函数包起来。这样在程序编译时，如果加上-DDEBUG参数就能查看调
+试信息；否则不加该参数就不会显示调试信息。 
 
-4.2 ʹ��gcc��gdb 
-4.2.1 ���Բ��� 
-1��Ϊ���ܹ�ʹ��gdb���Գ����ڱ���׶μ���-g�������Գ���2.3Ϊ���� 
+4.2 使用gcc和gdb 
+4.2.1 调试步骤 
+1、为了能够使用gdb调试程序，在编译阶段加上-g参数，以程序2.3为例： 
 
 panfeng@ubuntu:~/segfault$ gcc -g -o segfault3 segfault3.c 
-2��ʹ��gdb������Գ��� 
+2、使用gdb命令调试程序： 
 
-���ƴ��� ��������:
+复制代码 代码如下:
 
 
 panfeng@ubuntu:~/segfault$ gdb ./segfault3 
@@ -453,9 +453,9 @@ Reading symbols from /home/panfeng/segfault/segfault3...done.
 (gdb) 
 
 
-3������gdb�����г��� 
+3、进入gdb后，运行程序： 
 
-���ƴ��� ��������:
+复制代码 代码如下:
 
 
 (gdb) run 
@@ -466,11 +466,11 @@ Program received signal SIGSEGV, Segmentation fault.
 (gdb) 
 
 
-���������������2.3�յ�SIGSEGV�źţ������δ��󣬲���ʾ��ַ0x001a306a������memcpy���Ĵ���λ��/lib/tls/i686/cmov/libc.so.6���С� 
+从输出看出，程序2.3收到SIGSEGV信号，触发段错误，并提示地址0x001a306a、调用memcpy报的错，位于/lib/tls/i686/cmov/libc.so.6库中。 
 
-4����ɵ��Ժ�����quit�����˳�gdb�� 
+4、完成调试后，输入quit命令退出gdb： 
 
-���ƴ��� ��������:
+复制代码 代码如下:
 
 
 (gdb) quit 
@@ -481,36 +481,36 @@ Inferior 1 [process 3207] will be killed.
 Quit anyway? (y or n) y 
 
 
-4.2.2 ���ó��� 
-1��������ȷ������һ���ᷢ���δ���������ʹ�á� 
+4.2.2 适用场景 
+1、仅当能确定程序一定会发生段错误的情况下使用。 
 
-2���������Դ����Ի�õ�����£�ʹ��-g����������� 
+2、当程序的源码可以获得的情况下，使用-g参数编译程序。 
 
-3��һ�����ڲ��Խ׶Σ�����������gdb���и����ã�ʹ�������м��������в����ȶ����ȵȡ� 
+3、一般用于测试阶段，生产环境下gdb会有副作用：使程序运行减慢，运行不够稳定，等等。 
 
-4����ʹ�ڲ��Խ׶Σ����������ڸ��ӣ�gdbҲ���ܴ����� 
+4、即使在测试阶段，如果程序过于复杂，gdb也不能处理。 
 
-4.3 ʹ��core�ļ���gdb 
-��4.2�����ᵽ�δ���ᴥ��SIGSEGV�źţ�ͨ��man 7 signal�����Կ���SIGSEGVĬ�ϵ�handler���ӡ�δ��������Ϣ��������core�ļ����ɴ�
-���ǿ��Խ����ڳ����쳣�˳�ʱ���ɵ�core�ļ��еĵ�����Ϣ��ʹ��gdb���������Գ����еĶδ��� 
+4.3 使用core文件和gdb 
+在4.2节中提到段错误会触发SIGSEGV信号，通过man 7 signal，可以看到SIGSEGV默认的handler会打印段错误出错信息，并产生core文件，由此
+我们可以借助于程序异常退出时生成的core文件中的调试信息，使用gdb工具来调试程序中的段错误。 
 
-4.3.1 ���Բ��� 
-1����һЩLinux�汾�£�Ĭ���ǲ�����core�ļ��ģ����ȿ��Բ鿴һ��ϵͳcore�ļ��Ĵ�С���ƣ� 
+4.3.1 调试步骤 
+1、在一些Linux版本下，默认是不产生core文件的，首先可以查看一下系统core文件的大小限制： 
 
 panfeng@ubuntu:~/segfault$ ulimit -c 
 0 
-2�����Կ���Ĭ����������£�����Linux�����·����δ���ʱ�����Զ�����core�ļ�������������core�ļ��Ĵ�С���ƣ���λΪKB���� 
+2、可以看到默认设置情况下，本机Linux环境下发生段错误时不会自动生成core文件，下面设置下core文件的大小限制（单位为KB）： 
 
 panfeng@ubuntu:~/segfault$ ulimit -c 1024 
 panfeng@ubuntu:~/segfault$ ulimit -c 
 1024 
-3�����г���2.3�������δ�������core�ļ��� 
+3、运行程序2.3，发生段错误生成core文件： 
 
 panfeng@ubuntu:~/segfault$ ./segfault3 
-�δ��� (core dumped) 
-4������core�ļ���ʹ��gdb���߽��е��ԣ� 
+段错误 (core dumped) 
+4、加载core文件，使用gdb工具进行调试： 
 
-���ƴ��� ��������:
+复制代码 代码如下:
 
 
 panfeng@ubuntu:~/segfault$ gdb ./segfault3 ./core 
@@ -525,7 +525,7 @@ For bug reporting instructions, please see:
 <http://www.gnu.org/software/gdb/bugs/>... 
 Reading symbols from /home/panfeng/segfault/segfault3...done. 
 
-warning: Can't read pathname for load map: ����/�������. 
+warning: Can't read pathname for load map: 输入/输出错误. 
 Reading symbols from /lib/tls/i686/cmov/libc.so.6...(no debugging symbols found)...done. 
 Loaded symbols for /lib/tls/i686/cmov/libc.so.6 
 Reading symbols from /lib/ld-linux.so.2...(no debugging symbols found)...done. 
@@ -535,33 +535,33 @@ Program terminated with signal 11, Segmentation fault.
 #0 0x0018506a in memcpy () from /lib/tls/i686/cmov/libc.6 
 
 
-�����������ͬ4.2.1��һ���Ķδ�����Ϣ�� 
+从输出看出，同4.2.1中一样的段错误信息。 
 
-5����ɵ��Ժ�����quit�����˳�gdb�� 
+5、完成调试后，输入quit命令退出gdb： 
 
 (gdb) quit 
-4.3.2 ���ó��� 
-1���ʺ�����ʵ�����ɻ����µ��Գ���Ķδ��󣨼��ڲ������·����δ������������ֶδ��󣩡� 
+4.3.2 适用场景 
+1、适合于在实际生成环境下调试程序的段错误（即在不用重新发生段错误的情况下重现段错误）。 
 
-2��������ܸ��ӣ�core�ļ��൱��ʱ���÷��������á� 
+2、当程序很复杂，core文件相当大时，该方法不可用。 
 
-4.4 ʹ��objdump 
-4.4.1 ���Բ��� 
-1��ʹ��dmesg����ҵ���������Ķδ��������Ϣ�� 
+4.4 使用objdump 
+4.4.1 调试步骤 
+1、使用dmesg命令，找到最近发生的段错误输出信息： 
 
 panfeng@ubuntu:~/segfault$ dmesg 
 ... ... 
 [17257.502808] segfault3[3320]: segfault at 80484e0 ip 0018506a sp bfc1cd6c error 7 in libc-2.10.1.so[110000+13e000] 
-���У������ǽ������ĵ��Թ������õ��Ƿ����δ���ĵ�ַ��80484e0��ָ��ָ���ַ��0018506a�� 
+其中，对我们接下来的调试过程有用的是发生段错误的地址：80484e0和指令指针地址：0018506a。 
 
-2��ʹ��objdump���ɶ����Ƶ������Ϣ���ض����ļ��У� 
+2、使用objdump生成二进制的相关信息，重定向到文件中： 
 
 panfeng@ubuntu:~/segfault$ objdump -d ./segfault3 > segfault3Dump 
-���У����ɵ�segfault3Dump�ļ��а����˶������ļ���segfault3�Ļ����롣 
+其中，生成的segfault3Dump文件中包含了二进制文件的segfault3的汇编代码。 
 
-3����segfault3Dump�ļ��в��ҷ����δ���ĵ�ַ�� 
+3、在segfault3Dump文件中查找发生段错误的地址： 
 
-���ƴ��� ��������:
+复制代码 代码如下:
 
 
 panfeng@ubuntu:~/segfault$ grep -n -A 10 -B 10 "80484e0" ./segfault3Dump 
@@ -588,19 +588,19 @@ panfeng@ubuntu:~/segfault$ grep -n -A 10 -B 10 "80484e0" ./segfault3Dump
 141- 8048413: c3 ret 
 
 
-ͨ�������ϻ������������֪�δ�����main��������Ӧ�Ļ��ָ����movl $0x80484e0,0x1c(%esp)���������򿪳����Դ�룬�ҵ����ָ
-���Ӧ��Դ�룬Ҳ�Ͷ�λ���δ����ˡ� 
+通过对以上汇编代码分析，得知段错误发生main函数，对应的汇编指令是movl $0x80484e0,0x1c(%esp)，接下来打开程序的源码，找到汇编指
+令对应的源码，也就定位到段错误了。 
 
-4.4.2 ���ó��� 
-1������Ҫ-g�������룬����Ҫ������core�ļ�������Ҫ��һ���Ļ�����Ի����� 
+4.4.2 适用场景 
+1、不需要-g参数编译，不需要借助于core文件，但需要有一定的汇编语言基础。 
 
-2�����ʹ����gcc�����Ż�������-O1��-O2��-O3���Ļ������ɵĻ��ָ��ᱻ�Ż���ʹ�õ��Թ�����Щ�Ѷȡ� 
+2、如果使用了gcc编译优化参数（-O1，-O2，-O3）的话，生成的汇编指令将会被优化，使得调试过程有些难度。 
 
-4.5 ʹ��catchsegv 
-catchsegv����ר�������˻�δ�����ͨ����̬��������ld-linux.so����Ԥ���ػ��ƣ�PRELOAD����һ������д�õĿ⣨/lib/libSegFault.so��
-�����ϣ����ڲ�׽�ϴ���ĳ�����Ϣ�� 
+4.5 使用catchsegv 
+catchsegv命令专门用来扑获段错误，它通过动态加载器（ld-linux.so）的预加载机制（PRELOAD）把一个事先写好的库（/lib/libSegFault.so）
+加载上，用于捕捉断错误的出错信息。 
 
-���ƴ��� ��������:
+复制代码 代码如下:
 
 
 panfeng@ubuntu:~/segfault$ catchsegv ./segfault3 
@@ -650,30 +650,30 @@ b78df000-b78e1000 rw-p 00000000 00:00 0
 bfb67000-bfb7c000 rw-p 00000000 00:00 0 [stack] 
 
 
-5. һЩע������ 
-1�����ֶδ���ʱ������Ӧ���뵽�δ���Ķ��壬���������������������ԭ�� 
+5. 一些注意事项 
+1、出现段错误时，首先应该想到段错误的定义，从它出发考虑引发错误的原因。 
 
-2����ʹ��ָ��ʱ��������ָ���ǵó�ʼ��ָ�룬��ʹ�õ�ʱ��ǵ��ж��Ƿ�ΪNULL�� 
+2、在使用指针时，定义了指针后记得初始化指针，在使用的时候记得判断是否为NULL。 
 
-3����ʹ������ʱ��ע�������Ƿ񱻳�ʼ���������±��Ƿ�Խ�磬����Ԫ���Ƿ���ڵȡ� 
+3、在使用数组时，注意数组是否被初始化，数组下标是否越界，数组元素是否存在等。 
 
-4���ڷ��ʱ���ʱ��ע�������ռ��ַ�ռ��Ƿ��Ѿ��������ͷŵ��� 
+4、在访问变量时，注意变量所占地址空间是否已经被程序释放掉。 
 
-5���ڴ�������ʱ��ע������ĸ�ʽ�����Ƿ�����ȡ� 
+5、在处理变量时，注意变量的格式控制是否合理等。 
 
-6. �ο������б� 
-1��http://www.docin.com/p-105923877.html 
+6. 参考资料列表 
+1、http://www.docin.com/p-105923877.html 
 
-2��http://blog.chinaunix.net/space.php?uid=317451&do=blog&id=92412 
+2、http://blog.chinaunix.net/space.php?uid=317451&do=blog&id=92412 
 
 
 
-//corefileЯ�����̺�
+//corefile携带进程号
 echo 1 > /proc/sys/kernel/core_uses_pid
 echo /var/corefile/core-%e-%p-%t > /proc/sys/kernel/core_pattern
 
 
-�ġ�gdb����codedump:
+四、gdb调试codedump:
 gdb programfile codedumpfile
 (gdb) bt
 
