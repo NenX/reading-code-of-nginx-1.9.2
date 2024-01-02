@@ -155,9 +155,13 @@ mytest_upstream_create_request(ngx_http_request_t *r)
 {
     //发往google上游服务器的请求很简单，就是模仿正常的搜索请求，
 //以/search?q=…的URL来发起搜索请求。backendQueryLine中的%V等转化
+    // static ngx_str_t backendQueryLine =
+    //     ngx_string("GET /search?q=%V HTTP/1.1\r\nHost: www.sina.com\r\nConnection: close\r\n\r\n");
+    // ngx_int_t queryLineLen = backendQueryLine.len + r->args.len - 2;
     static ngx_str_t backendQueryLine =
-        ngx_string("GET /search?q=%V HTTP/1.1\r\nHost: www.sina.com\r\nConnection: close\r\n\r\n");
-    ngx_int_t queryLineLen = backendQueryLine.len + r->args.len - 2;
+        ngx_string("GET / HTTP/1.1\r\nHost: www.baidu.com\r\nConnection: close\r\n\r\n");
+    // ngx_int_t queryLineLen = backendQueryLine.len + r->args.len - 2;
+    ngx_int_t queryLineLen = backendQueryLine.len;
     //必须由内存池中申请内存，这有两点好处：在网络情况不佳的情况下，向上游
 //服务器发送请求时，可能需要epoll多次调度send发送才能完成，
 //这时必须保证这段内存不会被释放；请求结束时，这段内存会被自动释放，
@@ -464,7 +468,7 @@ ngx_http_mytest_upstream_handler(ngx_http_request_t *r)
 
     //这里的上游服务器就是www.google.com
     static struct sockaddr_in backendSockAddr;
-    struct hostent *pHost = gethostbyname((char*) "www.sina.com");
+    struct hostent *pHost = gethostbyname((char*) "www.baidu.com");
     if (pHost == NULL) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "gethostbyname fail. %s", strerror(errno));
         
