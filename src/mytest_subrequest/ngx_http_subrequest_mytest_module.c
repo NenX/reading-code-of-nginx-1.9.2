@@ -15,7 +15,7 @@ mytest_post_handler(ngx_http_request_t *r);
 
 static ngx_command_t ngx_http_subrequest_mytest_commands[] =
     {
-        {ngx_string("subrequest_yyz"),
+        {ngx_string("mytest_subrequest"),
          NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF | NGX_HTTP_LMT_CONF | NGX_CONF_NOARGS,
          ngx_http_subrequest_mytest,
          NGX_HTTP_LOC_CONF_OFFSET,
