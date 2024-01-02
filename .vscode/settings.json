@@ -5,6 +5,7 @@
         ".env.prod.sh": "shellscript",
         "uri编码.C": "cpp",
         "ngx_config.h": "c",
-        "ngx_core.h": "c"
+        "ngx_core.h": "c",
+        "type_traits": "c"
     }
 }
