@@ -4,58 +4,64 @@
  * Copyright (C) Nginx, Inc.
  */
 
-
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_event.h>
-
 
 #if (NGX_HAVE_KQUEUE)
 
 ssize_t
 ngx_unix_recv(ngx_connection_t *c, u_char *buf, size_t size)
 {
-    ssize_t       n;
-    ngx_err_t     err;
-    ngx_event_t  *rev;
+    ssize_t n;
+    ngx_err_t err;
+    ngx_event_t *rev;
 
     rev = c->read;
 
-    if (ngx_event_flags & NGX_USE_KQUEUE_EVENT) {
+    if (ngx_event_flags & NGX_USE_KQUEUE_EVENT)
+    {
         ngx_log_debug3(NGX_LOG_DEBUG_EVENT, c->log, 0,
                        "recv: eof:%d, avail:%d, err:%d",
                        rev->pending_eof, rev->available, rev->kq_errno);
 
-        if (rev->available == 0) {
-            if (rev->pending_eof) {
+        if (rev->available == 0)
+        {
+            if (rev->pending_eof)
+            {
                 rev->ready = 0;
                 rev->eof = 1;
 
-                if (rev->kq_errno) {
+                if (rev->kq_errno)
+                {
                     rev->error = 1;
                     ngx_set_socket_errno(rev->kq_errno);
 
                     return ngx_connection_error(c, rev->kq_errno,
-                               "kevent() reported about an closed connection");
+                                                "kevent() reported about an closed connection");
                 }
 
                 return 0;
-
-            } else {
+            }
+            else
+            {
                 rev->ready = 0;
                 return NGX_AGAIN;
             }
         }
     }
 
-    do {
+    do
+    {
         n = recv(c->fd, buf, size, 0);
 
         ngx_log_debug3(NGX_LOG_DEBUG_EVENT, c->log, 0,
                        "recv: fd:%d %d of %d", c->fd, n, size);
 
-        if (n >= 0) {
-            if (ngx_event_flags & NGX_USE_KQUEUE_EVENT) {
+        if (n >= 0)
+        {
+            if (ngx_event_flags & NGX_USE_KQUEUE_EVENT)
+            {
                 rev->available -= n;
 
                 /*
@@ -63,17 +69,21 @@ ngx_unix_recv(ngx_connection_t *c, u_char *buf, size_t size)
                  * bytes may be received between kevent() and recv()
                  */
 
-                if (rev->available <= 0) {
-                    if (!rev->pending_eof) {
+                if (rev->available <= 0)
+                {
+                    if (!rev->pending_eof)
+                    {
                         rev->ready = 0;
                     }
 
-                    if (rev->available < 0) {
+                    if (rev->available < 0)
+                    {
                         rev->available = 0;
                     }
                 }
 
-                if (n == 0) {
+                if (n == 0)
+                {
 
                     /*
                      * on FreeBSD recv() may return 0 on closed socket
@@ -88,13 +98,13 @@ ngx_unix_recv(ngx_connection_t *c, u_char *buf, size_t size)
                 return n;
             }
 
-            if ((size_t) n < size
-                && !(ngx_event_flags & NGX_USE_GREEDY_EVENT))
+            if ((size_t)n < size && !(ngx_event_flags & NGX_USE_GREEDY_EVENT))
             {
                 rev->ready = 0;
             }
 
-            if (n == 0) {
+            if (n == 0)
+            {
                 rev->eof = 1;
             }
 
@@ -103,12 +113,14 @@ ngx_unix_recv(ngx_connection_t *c, u_char *buf, size_t size)
 
         err = ngx_socket_errno;
 
-        if (err == NGX_EAGAIN || err == NGX_EINTR) {
+        if (err == NGX_EAGAIN || err == NGX_EINTR)
+        {
             ngx_log_debug0(NGX_LOG_DEBUG_EVENT, c->log, err,
                            "recv() not ready");
             n = NGX_AGAIN;
-
-        } else {
+        }
+        else
+        {
             n = ngx_connection_error(c, err, "recv() failed");
             break;
         }
@@ -117,7 +129,8 @@ ngx_unix_recv(ngx_connection_t *c, u_char *buf, size_t size)
 
     rev->ready = 0;
 
-    if (n == NGX_ERROR) {
+    if (n == NGX_ERROR)
+    {
         rev->error = 1;
     }
 
@@ -129,85 +142,88 @@ ngx_unix_recv(ngx_connection_t *c, u_char *buf, size_t size)
 ssize_t
 ngx_unix_recv(ngx_connection_t *c, u_char *buf, size_t size)
 {
-    ssize_t       n;
-    ngx_err_t     err;
-    ngx_event_t  *rev;
+    ssize_t n;
+    ngx_err_t err;
+    ngx_event_t *rev;
     int ready = 0;
 
     rev = c->read;
 
-    do {
+    do
+    {
         /*
-            Õë¶Ô·Ç×èÈûI/OÖ´ĞĞµÄÏµÍ³µ÷ÓÃÔò×ÜÊÇÁ¢¼´·µ»Ø£¬¶ø²»¹ÜÊÂ¼ş×ã·ñÒÑ¾­·¢Éú¡£Èç¹ûÊÂ¼şÃ»ÓĞíõ¼´·¢Éú£¬ÕâĞ©ÏµÍ³µ÷ÓÃ¾Í
-        ·µ»Ø¡ª1£®ºÍ³ö´íµÄÇé¿öÒ»Ñù¡£´ËÊ±ÎÒÃÇ±ØĞë¸ù¾İerrnoÀ´Çø·ÖÕâÁ½ÖÖÇé¿ö¡£¶Ôaccept¡¢sendºÍrecv¶øÑÔ£¬ÊÂ¼şÎ´·¢Å£Ê±errno
-        Í¨³£±»ÉèÖÃ³ÉEAGAIN£¨ÒâÎª¡°ÔÙÀ´Ò»´Î¡±£©»òÕßEWOULDBLOCK£¨ÒâÎª¡°ÆÚ´ı×èÈû¡±£©£º¶Ôconncct¶øÑÔ£¬errnoÔò±»
-        ÉèÖÃ³ÉEINPROGRESS£¨ÒâÎª¡°ÔÚ´¦ÀíÖĞ"£©¡£
+            é’ˆå¯¹éé˜»å¡I/Oæ‰§è¡Œçš„ç³»ç»Ÿè°ƒç”¨åˆ™æ€»æ˜¯ç«‹å³è¿”å›ï¼Œè€Œä¸ç®¡äº‹ä»¶è¶³å¦å·²ç»å‘ç”Ÿã€‚å¦‚æœäº‹ä»¶æ²¡æœ‰çœ­å³å‘ç”Ÿï¼Œè¿™äº›ç³»ç»Ÿè°ƒç”¨å°±
+        è¿”å›â€”1ï¼å’Œå‡ºé”™çš„æƒ…å†µä¸€æ ·ã€‚æ­¤æ—¶æˆ‘ä»¬å¿…é¡»æ ¹æ®errnoæ¥åŒºåˆ†è¿™ä¸¤ç§æƒ…å†µã€‚å¯¹acceptã€sendå’Œrecvè€Œè¨€ï¼Œäº‹ä»¶æœªå‘ç‰›æ—¶errno
+        é€šå¸¸è¢«è®¾ç½®æˆEAGAINï¼ˆæ„ä¸ºâ€œå†æ¥ä¸€æ¬¡â€ï¼‰æˆ–è€…EWOULDBLOCKï¼ˆæ„ä¸ºâ€œæœŸå¾…é˜»å¡â€ï¼‰ï¼šå¯¹conncctè€Œè¨€ï¼Œerrnoåˆ™è¢«
+        è®¾ç½®æˆEINPROGRESSï¼ˆæ„ä¸ºâ€œåœ¨å¤„ç†ä¸­"ï¼‰ã€‚
           */
-        //n = recv(c->fd, buf, size, 0); yang test
-        //These calls return the number of bytes received, or -1 if an error occurred.  The return value will be 0 when the peer has performed an orderly shutdown.
-        n = recv(c->fd, buf, size, 0);//±íÊ¾TCP´íÎó£¬¼ûngx_http_read_request_header   recv·µ»Ø0±íÊ¾¶Ô·½ÒÑ¾­¹Ø±ÕÁ¬½Ó
+        // n = recv(c->fd, buf, size, 0); yang test
+        // These calls return the number of bytes received, or -1 if an error occurred.  The return value will be 0 when the peer has performed an orderly shutdown.
+        n = recv(c->fd, buf, size, 0); // è¡¨ç¤ºTCPé”™è¯¯ï¼Œè§ngx_http_read_request_header   recvè¿”å›0è¡¨ç¤ºå¯¹æ–¹å·²ç»å…³é—­è¿æ¥
 
-        //¶ÁÈ¡³É¹¦£¬Ö±½Ó·µ»Ø   
+        // è¯»å–æˆåŠŸï¼Œç›´æ¥è¿”å›
 
-
-
-        //recv·µ»Ø0£¬±¾¶Ë²»Ó¦¸ÃÈ¥¹Ø±ÕÁ¬½Ó£¬Èç¹ûÊÇÒòÎª¶Ô¶ËÊ¹ÓÃÁËshutdownÀ´¹Ø±Õ°ëÁ¬½Ó£¬±¾¶Ë»¹ÊÇ¿ÉÒÔ·¢ËÍÊı¾İµÄ£¬ÖªÊ¶²»ÄÜ¶ÁÊı¾İ£¬ËùÒÔÕâÀïÖÃready=0
-        //Èç¹û²»ÊÇ¶Ô¶Ëshutdown£¬ÄÇÃ´ËµÃ÷ÊÇÒòÎª¶Á»º³åÇøÊı¾İ¶ÁÍêÁË£¬Ã»Êı¾İÁË£¬¶Á²»µ½Êı¾İ£¬ËùÒÔ·µ»Ø0¡£·µ»Ø0²»ÄÜ±¾¶Ë²»ÄÜ¹Ø±ÕÌ×½Ó×Ö
-        //recv·µ»Ø0£¬±íÊ¾¶Ô¶ËÊ¹ÓÃshutdownÀ´ÊµÏÖ°ë¹Ø±Õ»òÕßÒì²½¶ÁĞ´µÄÇé¿öÏÂ£¬»º³åÇøÃ»ÓĞÊı¾İ¿É¶Á£¬Ò²»á·µ»Ø0¡£send·µ»Ø0µ±×÷Õı³£Çé¿ö´¦Àí
-        if (n == 0) { //±íÊ¾TCP´íÎó£¬¼ûngx_http_read_request_header   recv·µ»Ø0±íÊ¾¶Ô·½ÒÑ¾­¹Ø±ÕÁ¬½Ó The return value will be 0 when the peer has performed an orderly shutdown.
-            rev->ready = 0;//Êı¾İ¶ÁÈ¡Íê±ÏreadyÖÃ0
+        // recvè¿”å›0ï¼Œæœ¬ç«¯ä¸åº”è¯¥å»å…³é—­è¿æ¥ï¼Œå¦‚æœæ˜¯å› ä¸ºå¯¹ç«¯ä½¿ç”¨äº†shutdownæ¥å…³é—­åŠè¿æ¥ï¼Œæœ¬ç«¯è¿˜æ˜¯å¯ä»¥å‘é€æ•°æ®çš„ï¼ŒçŸ¥è¯†ä¸èƒ½è¯»æ•°æ®ï¼Œæ‰€ä»¥è¿™é‡Œç½®ready=0
+        // å¦‚æœä¸æ˜¯å¯¹ç«¯shutdownï¼Œé‚£ä¹ˆè¯´æ˜æ˜¯å› ä¸ºè¯»ç¼“å†²åŒºæ•°æ®è¯»å®Œäº†ï¼Œæ²¡æ•°æ®äº†ï¼Œè¯»ä¸åˆ°æ•°æ®ï¼Œæ‰€ä»¥è¿”å›0ã€‚è¿”å›0ä¸èƒ½æœ¬ç«¯ä¸èƒ½å…³é—­å¥—æ¥å­—
+        // recvè¿”å›0ï¼Œè¡¨ç¤ºå¯¹ç«¯ä½¿ç”¨shutdownæ¥å®ç°åŠå…³é—­æˆ–è€…å¼‚æ­¥è¯»å†™çš„æƒ…å†µä¸‹ï¼Œç¼“å†²åŒºæ²¡æœ‰æ•°æ®å¯è¯»ï¼Œä¹Ÿä¼šè¿”å›0ã€‚sendè¿”å›0å½“ä½œæ­£å¸¸æƒ…å†µå¤„ç†
+        if (n == 0)
+        {                   // è¡¨ç¤ºTCPé”™è¯¯ï¼Œè§ngx_http_read_request_header   recvè¿”å›0è¡¨ç¤ºå¯¹æ–¹å·²ç»å…³é—­è¿æ¥ The return value will be 0 when the peer has performed an orderly shutdown.
+            rev->ready = 0; // æ•°æ®è¯»å–å®Œæ¯•readyç½®0
             rev->eof = 1;
             goto end;
-
-        } else if (n > 0) {
-            //ÆÚ´ı·¢ËÍ1000×Ö½Ú£¬Êµ¼ÊÉÏ·µ»Ø500×Ö½Ú£¬ËµÃ÷ÄÚºË»º³åÇø½ÓÊÕµ½Õâ500×Ö½ÚºóÒÑ¾­ÂúÁË£¬²»ÄÜÔÚĞ´, readÎª0£¬Ö»ÓĞµÈepollĞ´ÊÂ¼ş´¥·¢ read
-            //µ«ÊÇ£¬½ÓÊÕÈç¹ûÆÚ´ı½ÓÊÕ1000×Ö½Ú£¬·µ»Ø500×Ö½ÚÔòËµÃ÷ÎÒÄÚºË»º³åÇøÖĞÖ»ÓĞ500×Ö½Ú£¬Òò´Ë¿ÉÒÔ¼ÌĞørecv£¬ready»¹ÊÇÎª1
-            if ((size_t) n < size
-                && !(ngx_event_flags & NGX_USE_GREEDY_EVENT)) //Êı¾İ¶ÁÈ¡Íê±ÏreadyÖÃ0,ĞèÒªÖØĞÂÌí¼Óadd epoll event
+        }
+        else if (n > 0)
+        {
+            // æœŸå¾…å‘é€1000å­—èŠ‚ï¼Œå®é™…ä¸Šè¿”å›500å­—èŠ‚ï¼Œè¯´æ˜å†…æ ¸ç¼“å†²åŒºæ¥æ”¶åˆ°è¿™500å­—èŠ‚åå·²ç»æ»¡äº†ï¼Œä¸èƒ½åœ¨å†™, readä¸º0ï¼Œåªæœ‰ç­‰epollå†™äº‹ä»¶è§¦å‘ read
+            // ä½†æ˜¯ï¼Œæ¥æ”¶å¦‚æœæœŸå¾…æ¥æ”¶1000å­—èŠ‚ï¼Œè¿”å›500å­—èŠ‚åˆ™è¯´æ˜æˆ‘å†…æ ¸ç¼“å†²åŒºä¸­åªæœ‰500å­—èŠ‚ï¼Œå› æ­¤å¯ä»¥ç»§ç»­recvï¼Œreadyè¿˜æ˜¯ä¸º1
+            if ((size_t)n < size && !(ngx_event_flags & NGX_USE_GREEDY_EVENT)) // æ•°æ®è¯»å–å®Œæ¯•readyç½®0,éœ€è¦é‡æ–°æ·»åŠ add epoll event
             {
-                rev->ready = 0; //ÎÒÆÚÍû¶ÁÈ¡1000×Ö½Ú£¬µ¥Êµ¼ÊÉÏ·µ»Ø500×Ö½Ú£¬ËµÃ÷ÄÚºË»º³åÇøÊı¾İÒÑ¾­¶ÁÈ¡Íê±Ï  epoll²»»á×ßµ½ÕâÀï
+                rev->ready = 0; // æˆ‘æœŸæœ›è¯»å–1000å­—èŠ‚ï¼Œå•å®é™…ä¸Šè¿”å›500å­—èŠ‚ï¼Œè¯´æ˜å†…æ ¸ç¼“å†²åŒºæ•°æ®å·²ç»è¯»å–å®Œæ¯•  epollä¸ä¼šèµ°åˆ°è¿™é‡Œ
             }
 
             goto end;
         }
 
-        //Èç¹ûÄÚºËÊı¾İ½ÓÊÕÍê±Ï£¬Ôò×ßµ½ÕâÀïnÎª-1£¬errÎªNGX_EAGAIN
+        // å¦‚æœå†…æ ¸æ•°æ®æ¥æ”¶å®Œæ¯•ï¼Œåˆ™èµ°åˆ°è¿™é‡Œnä¸º-1ï¼Œerrä¸ºNGX_EAGAIN
         err = ngx_socket_errno;
-        
-        /* 
-          EINTR´íÎóµÄ²úÉú£ºµ±×èÈûÓÚÄ³¸öÂıÏµÍ³µ÷ÓÃµÄÒ»¸ö½ø³Ì²¶»ñÄ³¸öĞÅºÅÇÒÏàÓ¦ĞÅºÅ´¦Àíº¯Êı·µ»ØÊ±£¬¸ÃÏµÍ³µ÷ÓÃ¿ÉÄÜ·µ»ØÒ»¸öEINTR´íÎó¡£   
-          ÔÚlinux½øĞĞ·Ç×èÈûµÄsocket½ÓÊÕÊı¾İÊ±¾­³£³öÏÖResource temporarily unavailable£¬errno´úÂëÎª11(EAGAIN)£¬Õâ±íÃ÷ÄãÔÚ·Ç×èÈûÄ£Ê½ÏÂµ÷ÓÃÁË×èÈû²Ù×÷£¬
-          ÔÚ¸Ã²Ù×÷Ã»ÓĞÍê³É¾Í·µ»ØÕâ¸ö´íÎó£¬Õâ¸ö´íÎó²»»áÆÆ»µsocketµÄÍ¬²½£¬²»ÓÃ¹ÜËü£¬ÏÂ´ÎÑ­»·½Ó×Årecv¾Í¿ÉÒÔ¡£¶Ô·Ç×èÈûsocket¶øÑÔ£¬EAGAIN²»ÊÇÒ»ÖÖ´íÎó¡£
-          ÔÚVxWorksºÍWindowsÉÏ£¬EAGAINµÄÃû×Ö½Ğ×öEWOULDBLOCK¡£ ÁíÍâ£¬Èç¹û³öÏÖEINTR¼´errnoÎª4£¬´íÎóÃèÊöInterrupted system call£¬²Ù×÷Ò²Ó¦¸Ã¼ÌĞø¡£
 
-          ÔÚLinux»·¾³ÏÂ¿ª·¢¾­³£»áÅöµ½ºÜ¶à´íÎó(ÉèÖÃerrno)£¬ÆäÖĞEAGAINÊÇÆäÖĞ±È½Ï³£¼ûµÄÒ»¸ö´íÎó(±ÈÈçÓÃÔÚ·Ç×èÈû²Ù×÷ÖĞ)¡£
-´Ó×ÖÃæÉÏÀ´¿´£¬ÊÇÌáÊ¾ÔÙÊÔÒ»´Î¡£Õâ¸ö´íÎó¾­³£³öÏÖÔÚµ±Ó¦ÓÃ³ÌĞò½øĞĞÒ»Ğ©·Ç×èÈû(non-blocking)²Ù×÷(¶ÔÎÄ¼ş»òsocket)µÄÊ±ºò¡£
-ÀıÈç£¬ÒÔ O_NONBLOCKµÄ±êÖ¾´ò¿ªÎÄ¼ş/socket/FIFO£¬Èç¹ûÄãÁ¬Ğø×öread²Ù×÷¶øÃ»ÓĞÊı¾İ¿É¶Á¡£´ËÊ±³ÌĞò²»»á×èÈûÆğÀ´µÈ´ıÊı¾İ×¼±¸¾ÍĞ÷·µ»Ø£¬
-readº¯Êı»á·µ»ØÒ»¸ö´íÎóEAGAIN£¬ÌáÊ¾ÄãµÄÓ¦ÓÃ³ÌĞòÏÖÔÚÃ»ÓĞÊı¾İ¿É¶ÁÇëÉÔºóÔÙÊÔ¡£
+        /*
+          EINTRé”™è¯¯çš„äº§ç”Ÿï¼šå½“é˜»å¡äºæŸä¸ªæ…¢ç³»ç»Ÿè°ƒç”¨çš„ä¸€ä¸ªè¿›ç¨‹æ•è·æŸä¸ªä¿¡å·ä¸”ç›¸åº”ä¿¡å·å¤„ç†å‡½æ•°è¿”å›æ—¶ï¼Œè¯¥ç³»ç»Ÿè°ƒç”¨å¯èƒ½è¿”å›ä¸€ä¸ªEINTRé”™è¯¯ã€‚
+          åœ¨linuxè¿›è¡Œéé˜»å¡çš„socketæ¥æ”¶æ•°æ®æ—¶ç»å¸¸å‡ºç°Resource temporarily unavailableï¼Œerrnoä»£ç ä¸º11(EAGAIN)ï¼Œè¿™è¡¨æ˜ä½ åœ¨éé˜»å¡æ¨¡å¼ä¸‹è°ƒç”¨äº†é˜»å¡æ“ä½œï¼Œ
+          åœ¨è¯¥æ“ä½œæ²¡æœ‰å®Œæˆå°±è¿”å›è¿™ä¸ªé”™è¯¯ï¼Œè¿™ä¸ªé”™è¯¯ä¸ä¼šç ´åsocketçš„åŒæ­¥ï¼Œä¸ç”¨ç®¡å®ƒï¼Œä¸‹æ¬¡å¾ªç¯æ¥ç€recvå°±å¯ä»¥ã€‚å¯¹éé˜»å¡socketè€Œè¨€ï¼ŒEAGAINä¸æ˜¯ä¸€ç§é”™è¯¯ã€‚
+          åœ¨VxWorkså’ŒWindowsä¸Šï¼ŒEAGAINçš„åå­—å«åšEWOULDBLOCKã€‚ å¦å¤–ï¼Œå¦‚æœå‡ºç°EINTRå³errnoä¸º4ï¼Œé”™è¯¯æè¿°Interrupted system callï¼Œæ“ä½œä¹Ÿåº”è¯¥ç»§ç»­ã€‚
+
+          åœ¨Linuxç¯å¢ƒä¸‹å¼€å‘ç»å¸¸ä¼šç¢°åˆ°å¾ˆå¤šé”™è¯¯(è®¾ç½®errno)ï¼Œå…¶ä¸­EAGAINæ˜¯å…¶ä¸­æ¯”è¾ƒå¸¸è§çš„ä¸€ä¸ªé”™è¯¯(æ¯”å¦‚ç”¨åœ¨éé˜»å¡æ“ä½œä¸­)ã€‚
+ä»å­—é¢ä¸Šæ¥çœ‹ï¼Œæ˜¯æç¤ºå†è¯•ä¸€æ¬¡ã€‚è¿™ä¸ªé”™è¯¯ç»å¸¸å‡ºç°åœ¨å½“åº”ç”¨ç¨‹åºè¿›è¡Œä¸€äº›éé˜»å¡(non-blocking)æ“ä½œ(å¯¹æ–‡ä»¶æˆ–socket)çš„æ—¶å€™ã€‚
+ä¾‹å¦‚ï¼Œä»¥ O_NONBLOCKçš„æ ‡å¿—æ‰“å¼€æ–‡ä»¶/socket/FIFOï¼Œå¦‚æœä½ è¿ç»­åšreadæ“ä½œè€Œæ²¡æœ‰æ•°æ®å¯è¯»ã€‚æ­¤æ—¶ç¨‹åºä¸ä¼šé˜»å¡èµ·æ¥ç­‰å¾…æ•°æ®å‡†å¤‡å°±ç»ªè¿”å›ï¼Œ
+readå‡½æ•°ä¼šè¿”å›ä¸€ä¸ªé”™è¯¯EAGAINï¼Œæç¤ºä½ çš„åº”ç”¨ç¨‹åºç°åœ¨æ²¡æœ‰æ•°æ®å¯è¯»è¯·ç¨åå†è¯•ã€‚
           */
-        if (err == NGX_EAGAIN || err == NGX_EINTR) {  //ÕâÁ½ÖÖÇé¿ö ,ĞèÒª¼ÌĞø¶Á
-            
-            ngx_log_debug0(NGX_LOG_DEBUG_EVENT, c->log, err,
-                           "recv() not ready"); //recv() not ready (11: Resource temporarily unavailable)
-            n = NGX_AGAIN; //·µ»ØÕâ¸ö±íÊ¾ÄÚºËÊı¾İÒÑÓĞµÄÊı¾İÒÑ¾­¶ÁÈ¡Íê£¬ĞèÒªÖØĞÂadd epoll eventÀ´´¥·¢ĞÂÊı¾İepoll·µ»Ø
+        if (err == NGX_EAGAIN || err == NGX_EINTR)
+        { // è¿™ä¸¤ç§æƒ…å†µ ,éœ€è¦ç»§ç»­è¯»
 
-        } else {//TCPÁ¬½Ó³ö´íÁË
+            ngx_log_debug0(NGX_LOG_DEBUG_EVENT, c->log, err,
+                           "recv() not ready"); // recv() not ready (11: Resource temporarily unavailable)
+            n = NGX_AGAIN;                      // è¿”å›è¿™ä¸ªè¡¨ç¤ºå†…æ ¸æ•°æ®å·²æœ‰çš„æ•°æ®å·²ç»è¯»å–å®Œï¼Œéœ€è¦é‡æ–°add epoll eventæ¥è§¦å‘æ–°æ•°æ®epollè¿”å›
+        }
+        else
+        { // TCPè¿æ¥å‡ºé”™äº†
             n = ngx_connection_error(c, err, "recv() failed");
             break;
         }
 
-    } while (err == NGX_EINTR); //Èç¹û¶Á¹ı³ÌÖĞ±»ÖĞ¶ÏÇĞ»»£¬Ôò¼ÌĞø¶Á
+    } while (err == NGX_EINTR); // å¦‚æœè¯»è¿‡ç¨‹ä¸­è¢«ä¸­æ–­åˆ‡æ¢ï¼Œåˆ™ç»§ç»­è¯»
 
     rev->ready = 0;
 
-    if (n == NGX_ERROR) {
+    if (n == NGX_ERROR)
+    {
         rev->error = 1;
     }
 
 end:
     ready = rev->ready;
     ngx_log_debug4(NGX_LOG_DEBUG_EVENT, c->log, 0,
-                           "recv: fd:%d read-size:%d of %d, ready:%d", c->fd, n, size, ready);
+                   "recv: fd:%d read-size:%d of %d, ready:%d", c->fd, n, size, ready);
     return n;
 }
 
