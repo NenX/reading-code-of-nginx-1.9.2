@@ -4,119 +4,113 @@
  * Copyright (C) Nginx, Inc.
  */
 
-
 #ifndef _NGX_PROCESS_H_INCLUDED_
 #define _NGX_PROCESS_H_INCLUDED_
-
 
 #include <ngx_setaffinity.h>
 #include <ngx_setproctitle.h>
 
+typedef pid_t ngx_pid_t;
 
-typedef pid_t       ngx_pid_t;
-
-#define NGX_INVALID_PID  -1
-
-/*
-Worker½ø³ÌµÄ¹¤×÷Ñ­»·ngx_worker_process_cycle·½·¨Ò²ÊÇÒÀÕÕngx_spawn_proc_ptÀ´¶¨ÒåµÄ
-cacheManage½ø³Ì»òÕßcache_loader½ø³ÌµÄ¹¤×÷Ñ­»·ngx_cache_manager_process_cycle·½·¨Ò²ÊÇÈç´Ë
-*/
-//ngx_spawn_processº¯ÊıÖĞµ÷ÓÃ
-typedef void (*ngx_spawn_proc_pt) (ngx_cycle_t *cycle, void *data);
+#define NGX_INVALID_PID -1
 
 /*
-ÔÚ½âÊÍmaster¹¤×÷Á÷³ÌÇ°£¬»¹ĞèÒª¶Ômaster½ø³Ì¹ÜÀí×Ó½ø³ÌµÄÊı¾İ½á¹¹ÓĞ¸ö³õ²½ÁË½â¡£ÏÂÃæ¶¨ÒåÁËpgx_processesÈ«¾ÖÊı×é£¬ËäÈ»×Ó½ø³ÌÖĞÒ²»á
-ÓĞngx_processesÊı×é£¬µ«Õâ¸öÊı×é½ö½öÊÇ¸ømaster½ø³ÌÊ¹ÓÃµÄ
-
-master½ø³ÌÖĞËùÓĞ×Ó½ø³ÌÏà¹ØµÄ×´Ì¬ĞÅÏ¢¶¼±£´æÔÚngx_processesÊı×éÖĞ¡£ÔÙÀ´¿´Ò»ÏÂÊı×éÔªËØµÄÀàĞÍngx_process_t½á¹¹ÌåµÄ¶¨Òå£¬´úÂëÈçÏÂ¡£
+Workerè¿›ç¨‹çš„å·¥ä½œå¾ªç¯ngx_worker_process_cycleæ–¹æ³•ä¹Ÿæ˜¯ä¾ç…§ngx_spawn_proc_ptæ¥å®šä¹‰çš„
+cacheManageè¿›ç¨‹æˆ–è€…cache_loaderè¿›ç¨‹çš„å·¥ä½œå¾ªç¯ngx_cache_manager_process_cycleæ–¹æ³•ä¹Ÿæ˜¯å¦‚æ­¤
 */
-typedef struct {
-    ngx_pid_t           pid; //½ø³ÌID
-    int                 status; //×Ó½ø³ÌÍË³öºó£¬¸¸½ø³ÌÊÕµ½SIGCHLDºó£¬¿ªÊ¼waitpid£¬¸¸½ø³ÌÓÉwaitpidÏµÍ³µ÷ÓÃ»ñÈ¡µ½µÄ½ø³Ì×´Ì¬£¬¼ûngx_process_get_status
+// ngx_spawn_processå‡½æ•°ä¸­è°ƒç”¨
+typedef void (*ngx_spawn_proc_pt)(ngx_cycle_t *cycle, void *data);
+
+/*
+åœ¨è§£é‡Šmasterå·¥ä½œæµç¨‹å‰ï¼Œè¿˜éœ€è¦å¯¹masterè¿›ç¨‹ç®¡ç†å­è¿›ç¨‹çš„æ•°æ®ç»“æ„æœ‰ä¸ªåˆæ­¥äº†è§£ã€‚ä¸‹é¢å®šä¹‰äº†pgx_processeså…¨å±€æ•°ç»„ï¼Œè™½ç„¶å­è¿›ç¨‹ä¸­ä¹Ÿä¼š
+æœ‰ngx_processesæ•°ç»„ï¼Œä½†è¿™ä¸ªæ•°ç»„ä»…ä»…æ˜¯ç»™masterè¿›ç¨‹ä½¿ç”¨çš„
+
+masterè¿›ç¨‹ä¸­æ‰€æœ‰å­è¿›ç¨‹ç›¸å…³çš„çŠ¶æ€ä¿¡æ¯éƒ½ä¿å­˜åœ¨ngx_processesæ•°ç»„ä¸­ã€‚å†æ¥çœ‹ä¸€ä¸‹æ•°ç»„å…ƒç´ çš„ç±»å‹ngx_process_tç»“æ„ä½“çš„å®šä¹‰ï¼Œä»£ç å¦‚ä¸‹ã€‚
+*/
+typedef struct
+{
+    ngx_pid_t pid; // è¿›ç¨‹ID
+    int status;    // å­è¿›ç¨‹é€€å‡ºåï¼Œçˆ¶è¿›ç¨‹æ”¶åˆ°SIGCHLDåï¼Œå¼€å§‹waitpidï¼Œçˆ¶è¿›ç¨‹ç”±waitpidç³»ç»Ÿè°ƒç”¨è·å–åˆ°çš„è¿›ç¨‹çŠ¶æ€ï¼Œè§ngx_process_get_status
 
     /*
-    ÕâÊÇÓÉsocketpairÏµÍ³µ÷ÓÃ²úÉú³öµÄÓÃÓÚ½ø³Ì¼äÍ¨ĞÅµÄsocket¾ä±ú£¬ÕâÒ»¶Ôsocket¾ä±ú¿ÉÒÔ»¥ÏàÍ¨ĞÅ£¬Ä¿Ç°ÓÃÓÚmaster¸¸½ø³ÌÓëworker×Ó½ø³ÌÎÊµÄÍ¨ĞÅ£¬Ïê¼û14.4½Ú
+    è¿™æ˜¯ç”±socketpairç³»ç»Ÿè°ƒç”¨äº§ç”Ÿå‡ºçš„ç”¨äºè¿›ç¨‹é—´é€šä¿¡çš„socketå¥æŸ„ï¼Œè¿™ä¸€å¯¹socketå¥æŸ„å¯ä»¥äº’ç›¸é€šä¿¡ï¼Œç›®å‰ç”¨äºmasterçˆ¶è¿›ç¨‹ä¸workerå­è¿›ç¨‹é—®çš„é€šä¿¡ï¼Œè¯¦è§14.4èŠ‚
     */
-    ngx_socket_t        channel[2];//socketpairÊµ¼ÊÉÏÊÇÍ¨¹ı¹ÜµÀ·â×°ÊµÏÖµÄ ngx_spawn_processÖĞ¸³Öµ
+    ngx_socket_t channel[2]; // socketpairå®é™…ä¸Šæ˜¯é€šè¿‡ç®¡é“å°è£…å®ç°çš„ ngx_spawn_processä¸­èµ‹å€¼
 
-    //×Ó½ø³ÌµÄÑ­»·Ö´ĞĞ·½·¨£¬µ±¸¸½ø³Ìµ÷ÓÃngx_spawn_procesÉú³É×Ó½ø³ÌÊ±Ê¹ÓÃ
-    ngx_spawn_proc_pt   proc;
+    // å­è¿›ç¨‹çš„å¾ªç¯æ‰§è¡Œæ–¹æ³•ï¼Œå½“çˆ¶è¿›ç¨‹è°ƒç”¨ngx_spawn_procesç”Ÿæˆå­è¿›ç¨‹æ—¶ä½¿ç”¨
+    ngx_spawn_proc_pt proc;
 
     /*
-    ÉÏÃæµÄngx_spawn_proc_pt·½·¨ÖĞµÚ2¸ö²ÎÊıÀ×Òª´«µİ1¸öÖ¸Õë£¬ËüÊÇ¿ÉÑ¡µÄ¡£ÀıÈç£¬worker×Ó½ø³Ì¾Í²»ĞèÒª£¬¶øcache manage½ø³Ì
-    ¾ÍĞèÒªngx_cache_manager_ctxÉÏÏÂÎÄ³ÉÔ±¡£ÕâÊ±£¬dataÒ»°ãÓëngx_spawn_proc_pt·½·¨ÖĞµÚ2¸ö²ÎÊıÊÇµÈ¼ÛµÄ
+    ä¸Šé¢çš„ngx_spawn_proc_ptæ–¹æ³•ä¸­ç¬¬2ä¸ªå‚æ•°é›·è¦ä¼ é€’1ä¸ªæŒ‡é’ˆï¼Œå®ƒæ˜¯å¯é€‰çš„ã€‚ä¾‹å¦‚ï¼Œworkerå­è¿›ç¨‹å°±ä¸éœ€è¦ï¼Œè€Œcache manageè¿›ç¨‹
+    å°±éœ€è¦ngx_cache_manager_ctxä¸Šä¸‹æ–‡æˆå‘˜ã€‚è¿™æ—¶ï¼Œdataä¸€èˆ¬ä¸ngx_spawn_proc_ptæ–¹æ³•ä¸­ç¬¬2ä¸ªå‚æ•°æ˜¯ç­‰ä»·çš„
     */
-    void               *data;
-    char               *name;//½ø³ÌÃû³Æ¡£²Ù×÷ÏµÍ³ÖĞÏÔÊ¾µÄ½ø³ÌÃû³ÆÓënameÏàÍ¬
+    void *data;
+    char *name; // è¿›ç¨‹åç§°ã€‚æ“ä½œç³»ç»Ÿä¸­æ˜¾ç¤ºçš„è¿›ç¨‹åç§°ä¸nameç›¸åŒ
 
-    //Ò»ÏÂÕâĞ©Ç°Èı¸ö±ê¼ÇÔÚngx_spawn_processÖĞ¸³Öµ
-    unsigned            respawn:1; //±êÖ¾Î»£¬Îª1Ê±±íÊ¾ÔÚÖØĞÂÉú³É×Ó½ø³Ì
-    unsigned            just_spawn:1; //±êÖ¾Î»£¬Îª1Ê±±íÊ¾ÕıÔÚÉú³É×Ó½ø³Ì
-    unsigned            detached:1; //±êÖ¾Î»£¬Îª1Ê±±íÊ¾ÔÚ½øĞĞ¸¸¡¢×Ó½ø³Ì·ÖÀë
-    unsigned            exiting:1;//±êÖ¾Î»£¬Îª1Ê±±íÊ¾½ø³ÌÕıÔÚÍË³ö
-    unsigned            exited:1;//±êÖ¾Î»£¬Îª1Ê±±íÊ¾½ø³ÌÒÑ¾­ÍË³ö  µ±×Ó½ø³ÌÍË³öºó£¬¸¸½ø³ÌÊÕµ½SIGCHLDºó£¬¿ªÊ¼waitpid,¼ûngx_process_get_status
+    // ä¸€ä¸‹è¿™äº›å‰ä¸‰ä¸ªæ ‡è®°åœ¨ngx_spawn_processä¸­èµ‹å€¼
+    unsigned respawn : 1;    // æ ‡å¿—ä½ï¼Œä¸º1æ—¶è¡¨ç¤ºåœ¨é‡æ–°ç”Ÿæˆå­è¿›ç¨‹
+    unsigned just_spawn : 1; // æ ‡å¿—ä½ï¼Œä¸º1æ—¶è¡¨ç¤ºæ­£åœ¨ç”Ÿæˆå­è¿›ç¨‹
+    unsigned detached : 1;   // æ ‡å¿—ä½ï¼Œä¸º1æ—¶è¡¨ç¤ºåœ¨è¿›è¡Œçˆ¶ã€å­è¿›ç¨‹åˆ†ç¦»
+    unsigned exiting : 1;    // æ ‡å¿—ä½ï¼Œä¸º1æ—¶è¡¨ç¤ºè¿›ç¨‹æ­£åœ¨é€€å‡º
+    unsigned exited : 1;     // æ ‡å¿—ä½ï¼Œä¸º1æ—¶è¡¨ç¤ºè¿›ç¨‹å·²ç»é€€å‡º  å½“å­è¿›ç¨‹é€€å‡ºåï¼Œçˆ¶è¿›ç¨‹æ”¶åˆ°SIGCHLDåï¼Œå¼€å§‹waitpid,è§ngx_process_get_status
 } ngx_process_t;
 
-typedef struct {//¸³Öµ¼ûngx_exec_new_binary
-    char         *path; 
-    char         *name;
-    char *const  *argv;
-    char *const  *envp;
+typedef struct
+{ // èµ‹å€¼è§ngx_exec_new_binary
+    char *path;
+    char *name;
+    char *const *argv;
+    char *const *envp;
 } ngx_exec_ctx_t;
 
-//¶¨Òå1024¸öÔªËØµÄngx_processesÊı×é£¬Ò²¾ÍÊÇ×î¶àÖ»ÄÜÓĞ1024¸ö×Ó½ø³Ì
-#define NGX_MAX_PROCESSES         1024
+// å®šä¹‰1024ä¸ªå…ƒç´ çš„ngx_processesæ•°ç»„ï¼Œä¹Ÿå°±æ˜¯æœ€å¤šåªèƒ½æœ‰1024ä¸ªå­è¿›ç¨‹
+#define NGX_MAX_PROCESSES 1024
 
 /*
-ÔÚ·ÖÎöngx_spawn_process()´´½¨ĞÂ½ø³ÌÊ±£¬ÏÈÁË½âÏÂ½ø³ÌÊôĞÔ¡£Í¨Ë×µãËµ¾ÍÊÇ½ø³Ì¹ÒÁËĞè²»ĞèÒªÖØÆô¡£
-ÔÚÔ´ÂëÖĞ£¬nginx_process.hÖĞ£¬ÓĞÒÔÏÂ¼¸ÖÖÊôĞÔ±êÊ¶£º
+åœ¨åˆ†ængx_spawn_process()åˆ›å»ºæ–°è¿›ç¨‹æ—¶ï¼Œå…ˆäº†è§£ä¸‹è¿›ç¨‹å±æ€§ã€‚é€šä¿—ç‚¹è¯´å°±æ˜¯è¿›ç¨‹æŒ‚äº†éœ€ä¸éœ€è¦é‡å¯ã€‚
+åœ¨æºç ä¸­ï¼Œnginx_process.hä¸­ï¼Œæœ‰ä»¥ä¸‹å‡ ç§å±æ€§æ ‡è¯†ï¼š
 
-NGX_PROCESS_NORESPAWN    £º×Ó½ø³ÌÍË³öÊ±,¸¸½ø³Ì²»»áÔÙ´ÎÖØÆô
-NGX_PROCESS_JUST_SPAWN   £º--
-NGX_PROCESS_RESPAWN      £º×Ó½ø³ÌÒì³£ÍË³öÊ±,¸¸½ø³ÌĞèÒªÖØÆô
-NGX_PROCESS_JUST_RESPAWN £º--
-NGX_PROCESS_DETACHED     £ºÈÈ´úÂëÌæ»»£¬ÔİÊ±¹À¼ÆÊÇÓÃÓÚÔÚ²»ÖØÆôNginxµÄÇé¿öÏÂ½øĞĞÈí¼şÉı¼¶
+NGX_PROCESS_NORESPAWN    ï¼šå­è¿›ç¨‹é€€å‡ºæ—¶,çˆ¶è¿›ç¨‹ä¸ä¼šå†æ¬¡é‡å¯
+NGX_PROCESS_JUST_SPAWN   ï¼š--
+NGX_PROCESS_RESPAWN      ï¼šå­è¿›ç¨‹å¼‚å¸¸é€€å‡ºæ—¶,çˆ¶è¿›ç¨‹éœ€è¦é‡å¯
+NGX_PROCESS_JUST_RESPAWN ï¼š--
+NGX_PROCESS_DETACHED     ï¼šçƒ­ä»£ç æ›¿æ¢ï¼Œæš‚æ—¶ä¼°è®¡æ˜¯ç”¨äºåœ¨ä¸é‡å¯Nginxçš„æƒ…å†µä¸‹è¿›è¡Œè½¯ä»¶å‡çº§
 
-NGX_PROCESS_JUST_RESPAWN±êÊ¶×îÖÕ»áÔÚngx_spawn_process()´´½¨worker½ø³ÌÊ±£¬½«ngx_processes[s].just_spawn = 1£¬ÒÔ´Ë×÷ÎªÇø±ğ¾ÉµÄworker½ø³ÌµÄ±ê¼Ç¡£
+NGX_PROCESS_JUST_RESPAWNæ ‡è¯†æœ€ç»ˆä¼šåœ¨ngx_spawn_process()åˆ›å»ºworkerè¿›ç¨‹æ—¶ï¼Œå°†ngx_processes[s].just_spawn = 1ï¼Œä»¥æ­¤ä½œä¸ºåŒºåˆ«æ—§çš„workerè¿›ç¨‹çš„æ ‡è®°ã€‚
 */
-#define NGX_PROCESS_NORESPAWN     -1  //×Ó½ø³ÌÍË³öÊ±,¸¸½ø³Ì²»»áÔÙ´ÎÖØÆô
-#define NGX_PROCESS_JUST_SPAWN    -2
-#define NGX_PROCESS_RESPAWN       -3  //×Ó½ø³ÌÒì³£ÍË³öÊ±,¸¸½ø³ÌĞèÒªÖØÆô
-#define NGX_PROCESS_JUST_RESPAWN  -4   
-#define NGX_PROCESS_DETACHED      -5  //ÈÈ´úÂëÌæ»»£¬ÔİÊ±¹À¼ÆÊÇÓÃÓÚÔÚ²»ÖØÆôNginxµÄÇé¿öÏÂ½øĞĞÈí¼şÉı¼¶
+#define NGX_PROCESS_NORESPAWN -1 // å­è¿›ç¨‹é€€å‡ºæ—¶,çˆ¶è¿›ç¨‹ä¸ä¼šå†æ¬¡é‡å¯
+#define NGX_PROCESS_JUST_SPAWN -2
+#define NGX_PROCESS_RESPAWN -3 // å­è¿›ç¨‹å¼‚å¸¸é€€å‡ºæ—¶,çˆ¶è¿›ç¨‹éœ€è¦é‡å¯
+#define NGX_PROCESS_JUST_RESPAWN -4
+#define NGX_PROCESS_DETACHED -5 // çƒ­ä»£ç æ›¿æ¢ï¼Œæš‚æ—¶ä¼°è®¡æ˜¯ç”¨äºåœ¨ä¸é‡å¯Nginxçš„æƒ…å†µä¸‹è¿›è¡Œè½¯ä»¶å‡çº§
 
-
-#define ngx_getpid   getpid
+#define ngx_getpid getpid
 
 #ifndef ngx_log_pid
-#define ngx_log_pid  ngx_pid 
-//ngx_log_pid, ngx_log_tid½ø³ÌIDºÍÏß³ÌID(Ö÷Ïß³ÌºÅºÍ½ø³ÌºÅÏàÍ¬£¬ÔÚ¿ªÆôÏß³Ì³ØµÄÊ±ºòÏß³ÌIDºÍ½ø³ÌID²»Í¬),ÈÕÖ¾ÎÄ¼şÖĞ»á¼ÇÂ¼
+#define ngx_log_pid ngx_pid
+// ngx_log_pid, ngx_log_tidè¿›ç¨‹IDå’Œçº¿ç¨‹ID(ä¸»çº¿ç¨‹å·å’Œè¿›ç¨‹å·ç›¸åŒï¼Œåœ¨å¼€å¯çº¿ç¨‹æ± çš„æ—¶å€™çº¿ç¨‹IDå’Œè¿›ç¨‹IDä¸åŒ),æ—¥å¿—æ–‡ä»¶ä¸­ä¼šè®°å½•
 #endif
 
-
 ngx_pid_t ngx_spawn_process(ngx_cycle_t *cycle,
-    ngx_spawn_proc_pt proc, void *data, char *name, ngx_int_t respawn);
+                            ngx_spawn_proc_pt proc, void *data, char *name, ngx_int_t respawn);
 ngx_pid_t ngx_execute(ngx_cycle_t *cycle, ngx_exec_ctx_t *ctx);
 ngx_int_t ngx_init_signals(ngx_log_t *log);
 void ngx_debug_point(void);
 
-
 #if (NGX_HAVE_SCHED_YIELD)
-#define ngx_sched_yield()  sched_yield()
+#define ngx_sched_yield() sched_yield()
 #else
-#define ngx_sched_yield()  usleep(1)
+#define ngx_sched_yield() usleep(1)
 #endif
 
+extern int ngx_argc;
+extern char **ngx_argv;
+extern char **ngx_os_argv;
 
-extern int            ngx_argc;
-extern char         **ngx_argv;
-extern char         **ngx_os_argv;
-
-extern ngx_pid_t      ngx_pid;
-extern ngx_socket_t   ngx_channel;
-extern ngx_int_t      ngx_process_slot;
-extern ngx_int_t      ngx_last_process;
-extern ngx_process_t  ngx_processes[NGX_MAX_PROCESSES];
-
+extern ngx_pid_t ngx_pid;
+extern ngx_socket_t ngx_channel;
+extern ngx_int_t ngx_process_slot;
+extern ngx_int_t ngx_last_process;
+extern ngx_process_t ngx_processes[NGX_MAX_PROCESSES];
 
 #endif /* _NGX_PROCESS_H_INCLUDED_ */
