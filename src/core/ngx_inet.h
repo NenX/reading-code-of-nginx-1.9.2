@@ -4,14 +4,11 @@
  * Copyright (C) Nginx, Inc.
  */
 
-
 #ifndef _NGX_INET_H_INCLUDED_
 #define _NGX_INET_H_INCLUDED_
 
-
 #include <ngx_config.h>
 #include <ngx_core.h>
-
 
 /*
  * TODO: autoconfigure NGX_SOCKADDRLEN and NGX_SOCKADDR_STRLEN as
@@ -21,87 +18,87 @@
  *       sizeof(struct sockaddr_in)
  */
 
-#define NGX_INET_ADDRSTRLEN   (sizeof("255.255.255.255") - 1)
-#define NGX_INET6_ADDRSTRLEN                                                 \
+#define NGX_INET_ADDRSTRLEN (sizeof("255.255.255.255") - 1)
+#define NGX_INET6_ADDRSTRLEN \
     (sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255") - 1)
-#define NGX_UNIX_ADDRSTRLEN                                                  \
+#define NGX_UNIX_ADDRSTRLEN \
     (sizeof(struct sockaddr_un) - offsetof(struct sockaddr_un, sun_path))
 
 #if (NGX_HAVE_UNIX_DOMAIN)
-#define NGX_SOCKADDR_STRLEN   (sizeof("unix:") - 1 + NGX_UNIX_ADDRSTRLEN)
+#define NGX_SOCKADDR_STRLEN (sizeof("unix:") - 1 + NGX_UNIX_ADDRSTRLEN)
 #else
-#define NGX_SOCKADDR_STRLEN   (NGX_INET6_ADDRSTRLEN + sizeof("[]:65535") - 1)
+#define NGX_SOCKADDR_STRLEN (NGX_INET6_ADDRSTRLEN + sizeof("[]:65535") - 1)
 #endif
 
 #if (NGX_HAVE_UNIX_DOMAIN)
-#define NGX_SOCKADDRLEN       sizeof(struct sockaddr_un)
+#define NGX_SOCKADDRLEN sizeof(struct sockaddr_un)
 #else
-#define NGX_SOCKADDRLEN       512
+#define NGX_SOCKADDRLEN 512
 #endif
 
-
-typedef struct {
-    in_addr_t                 addr;
-    in_addr_t                 mask;
+typedef struct
+{
+    in_addr_t addr;
+    in_addr_t mask;
 } ngx_in_cidr_t;
-
 
 #if (NGX_HAVE_INET6)
 
-typedef struct {
-    struct in6_addr           addr;
-    struct in6_addr           mask;
+typedef struct
+{
+    struct in6_addr addr;
+    struct in6_addr mask;
 } ngx_in6_cidr_t;
 
 #endif
 
-
-typedef struct {
-    ngx_uint_t                family;
-    union {
-        ngx_in_cidr_t         in;
+typedef struct
+{
+    ngx_uint_t family;
+    union
+    {
+        ngx_in_cidr_t in;
 #if (NGX_HAVE_INET6)
-        ngx_in6_cidr_t        in6;
+        ngx_in6_cidr_t in6;
 #endif
     } u;
 } ngx_cidr_t;
 
-
-typedef struct {
-    struct sockaddr          *sockaddr;
-    socklen_t                 socklen;
-    ngx_str_t                 name;
+typedef struct
+{
+    struct sockaddr *sockaddr;
+    socklen_t socklen;
+    ngx_str_t name;
 } ngx_addr_t;
 
+typedef struct
+{                        // é€šé…ç¬¦è§£æè§ngx_parse_inet_url
+    ngx_str_t url;       // ä¿å­˜IPåœ°å€+ç«¯å£ä¿¡æ¯ï¼ˆe.g. 192.168.124.129:8011 æˆ– money.163.comï¼‰
+    ngx_str_t host;      // ä¿å­˜IPåœ°å€ä¿¡æ¯ //proxy_pass  http://10.10.0.103:8080/tttxx; ä¸­çš„10.10.0.103
+    ngx_str_t port_text; // ä¿å­˜portå­—ç¬¦ä¸²
+    ngx_str_t uri;       // uriéƒ¨åˆ†ï¼Œåœ¨å‡½æ•°ngx_parse_inet_url()ä¸­è®¾ç½®  http://10.10.0.103:8080/tttxx;ä¸­çš„/tttxx
 
-typedef struct { //Í¨Åä·û½âÎö¼ûngx_parse_inet_url
-    ngx_str_t                 url;//±£´æIPµØÖ·+¶Ë¿ÚĞÅÏ¢£¨e.g. 192.168.124.129:8011 »ò money.163.com£©
-    ngx_str_t                 host;//±£´æIPµØÖ·ĞÅÏ¢ //proxy_pass  http://10.10.0.103:8080/tttxx; ÖĞµÄ10.10.0.103
-    ngx_str_t                 port_text;//±£´æport×Ö·û´®
-    ngx_str_t                 uri;//uri²¿·Ö£¬ÔÚº¯Êıngx_parse_inet_url()ÖĞÉèÖÃ  http://10.10.0.103:8080/tttxx;ÖĞµÄ/tttxx
+    in_port_t port; // ç«¯å£ï¼Œe.g. listenæŒ‡ä»¤ä¸­æŒ‡å®šçš„ç«¯å£ï¼ˆlisten 192.168.124.129:8011ï¼‰
+    // é»˜è®¤ç«¯å£ï¼ˆå½“no_portå­—æ®µä¸ºçœŸæ—¶ï¼Œå°†é»˜è®¤ç«¯å£èµ‹å€¼ç»™portå­—æ®µï¼Œ é»˜è®¤ç«¯å£é€šå¸¸æ˜¯80ï¼‰
+    in_port_t default_port; // ngx_http_core_listenä¸­è®¾ç½®ä¸º80 //é»˜è®¤ç«¯å£ï¼ˆå½“no_portå­—æ®µä¸ºçœŸæ—¶ï¼Œå°†é»˜è®¤ç«¯å£èµ‹å€¼ç»™portå­—æ®µï¼Œ é»˜è®¤ç«¯å£é€šå¸¸æ˜¯80ï¼‰
+    int family;             // address family, AF_xxx  //AF_UNIXä»£è¡¨åŸŸå¥—æ¥å­—  AF_INETä»£è¡¨æ™®é€šç½‘ç»œå¥—æ¥å­—
 
-    in_port_t                 port;//¶Ë¿Ú£¬e.g. listenÖ¸ÁîÖĞÖ¸¶¨µÄ¶Ë¿Ú£¨listen 192.168.124.129:8011£©
-    //Ä¬ÈÏ¶Ë¿Ú£¨µ±no_port×Ö¶ÎÎªÕæÊ±£¬½«Ä¬ÈÏ¶Ë¿Ú¸³Öµ¸øport×Ö¶Î£¬ Ä¬ÈÏ¶Ë¿ÚÍ¨³£ÊÇ80£©
-    in_port_t                 default_port; //ngx_http_core_listenÖĞÉèÖÃÎª80 //Ä¬ÈÏ¶Ë¿Ú£¨µ±no_port×Ö¶ÎÎªÕæÊ±£¬½«Ä¬ÈÏ¶Ë¿Ú¸³Öµ¸øport×Ö¶Î£¬ Ä¬ÈÏ¶Ë¿ÚÍ¨³£ÊÇ80£©
-    int                       family;//address family, AF_xxx  //AF_UNIX´ú±íÓòÌ×½Ó×Ö  AF_INET´ú±íÆÕÍ¨ÍøÂçÌ×½Ó×Ö
+    unsigned listen : 1; // ngx_http_core_listenä¸­ç½®1 //æ˜¯å¦ä¸ºæŒ‡ç›‘å¬ç±»çš„è®¾ç½®
+    unsigned uri_part : 1;
+    unsigned no_resolve : 1;                   // æ ¹æ®æƒ…å†µå†³å®šæ˜¯å¦è§£æåŸŸåï¼ˆå°†åŸŸåè§£æåˆ°IPåœ°å€ï¼‰
+    unsigned one_addr : 1; /* compatibility */ /// ç­‰äº1æ—¶ï¼Œä»…æœ‰ä¸€ä¸ªIPåœ°å€
 
-    unsigned                  listen:1; //ngx_http_core_listenÖĞÖÃ1 //ÊÇ·ñÎªÖ¸¼àÌıÀàµÄÉèÖÃ
-    unsigned                  uri_part:1;
-    unsigned                  no_resolve:1; //¸ù¾İÇé¿ö¾ö¶¨ÊÇ·ñ½âÎöÓòÃû£¨½«ÓòÃû½âÎöµ½IPµØÖ·£©
-    unsigned                  one_addr:1;  /* compatibility */ ///µÈÓÚ1Ê±£¬½öÓĞÒ»¸öIPµØÖ·
+    unsigned no_port : 1;  // æ ‡è¯†urlä¸­æ²¡æœ‰æ˜¾ç¤ºæŒ‡å®šç«¯å£(ä¸º1æ—¶æ²¡æœ‰æŒ‡å®š)  uriä¸­æ˜¯å¦æœ‰æŒ‡å®šç«¯å£
+    unsigned wildcard : 1; // å¦‚listen  *:80åˆ™è¯¥ä½ç½®1 //æ ‡è¯†æ˜¯å¦ä½¿ç”¨é€šé…ç¬¦ï¼ˆe.g. listen *:8000;ï¼‰
 
-    unsigned                  no_port:1;//±êÊ¶urlÖĞÃ»ÓĞÏÔÊ¾Ö¸¶¨¶Ë¿Ú(Îª1Ê±Ã»ÓĞÖ¸¶¨)  uriÖĞÊÇ·ñÓĞÖ¸¶¨¶Ë¿Ú
-    unsigned                  wildcard:1; //Èçlisten  *:80Ôò¸ÃÎ»ÖÃ1 //±êÊ¶ÊÇ·ñÊ¹ÓÃÍ¨Åä·û£¨e.g. listen *:8000;£©
+    socklen_t socklen;                // sizeof(struct sockaddr_in)
+    u_char sockaddr[NGX_SOCKADDRLEN]; // sockaddr_inç»“æ„æŒ‡å‘å®ƒ
 
-    socklen_t                 socklen;//sizeof(struct sockaddr_in)
-    u_char                    sockaddr[NGX_SOCKADDRLEN];//sockaddr_in½á¹¹Ö¸ÏòËü
+    ngx_addr_t *addrs; // æ•°ç»„å¤§å°æ˜¯naddrså­—æ®µï¼›æ¯ä¸ªå…ƒç´ å¯¹åº”åŸŸåçš„IPåœ°å€ä¿¡æ¯(struct sockaddr_in)ï¼Œåœ¨å‡½æ•°ä¸­èµ‹å€¼ï¼ˆngx_inet_resolve_host()ï¼‰
+    ngx_uint_t naddrs; // urlå¯¹åº”çš„IPåœ°å€ä¸ªæ•°,IPæ ¼å¼çš„åœ°å€å°†é»˜è®¤ä¸º1
 
-    ngx_addr_t               *addrs;//Êı×é´óĞ¡ÊÇnaddrs×Ö¶Î£»Ã¿¸öÔªËØ¶ÔÓ¦ÓòÃûµÄIPµØÖ·ĞÅÏ¢(struct sockaddr_in)£¬ÔÚº¯ÊıÖĞ¸³Öµ£¨ngx_inet_resolve_host()£©
-    ngx_uint_t                naddrs;//url¶ÔÓ¦µÄIPµØÖ·¸öÊı,IP¸ñÊ½µÄµØÖ·½«Ä¬ÈÏÎª1
-
-    char                     *err;//´íÎóĞÅÏ¢×Ö·û´®
+    char *err; // é”™è¯¯ä¿¡æ¯å­—ç¬¦ä¸²
 } ngx_url_t;
-
 
 in_addr_t ngx_inet_addr(u_char *text, size_t len);
 #if (NGX_HAVE_INET6)
@@ -109,15 +106,14 @@ ngx_int_t ngx_inet6_addr(u_char *p, size_t len, u_char *addr);
 size_t ngx_inet6_ntop(u_char *p, u_char *text, size_t len);
 #endif
 size_t ngx_sock_ntop(struct sockaddr *sa, socklen_t socklen, u_char *text,
-    size_t len, ngx_uint_t port);
+                     size_t len, ngx_uint_t port);
 size_t ngx_inet_ntop(int family, void *addr, u_char *text, size_t len);
 ngx_int_t ngx_ptocidr(ngx_str_t *text, ngx_cidr_t *cidr);
 ngx_int_t ngx_parse_addr(ngx_pool_t *pool, ngx_addr_t *addr, u_char *text,
-    size_t len);
+                         size_t len);
 ngx_int_t ngx_parse_url(ngx_pool_t *pool, ngx_url_t *u);
 ngx_int_t ngx_inet_resolve_host(ngx_pool_t *pool, ngx_url_t *u);
 ngx_int_t ngx_cmp_sockaddr(struct sockaddr *sa1, socklen_t slen1,
-    struct sockaddr *sa2, socklen_t slen2, ngx_uint_t cmp_port);
-
+                           struct sockaddr *sa2, socklen_t slen2, ngx_uint_t cmp_port);
 
 #endif /* _NGX_INET_H_INCLUDED_ */
