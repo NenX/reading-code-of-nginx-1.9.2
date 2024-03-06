@@ -4,40 +4,34 @@
  * Copyright (C) Nginx, Inc.
  */
 
-
 #ifndef _NGX_EVENT_TIMER_H_INCLUDED_
 #define _NGX_EVENT_TIMER_H_INCLUDED_
-
 
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_event.h>
 
+#define NGX_TIMER_INFINITE (ngx_msec_t) - 1
 
-#define NGX_TIMER_INFINITE  (ngx_msec_t) -1
-
-#define NGX_TIMER_LAZY_DELAY  300
-
+#define NGX_TIMER_LAZY_DELAY 300
 
 ngx_int_t ngx_event_timer_init(ngx_log_t *log);
 ngx_msec_t ngx_event_find_timer(void);
 void ngx_event_expire_timers(void);
 void ngx_event_cancel_timers(void);
 
-
-extern ngx_rbtree_t  ngx_event_timer_rbtree;
-
+extern ngx_rbtree_t ngx_event_timer_rbtree;
 
 static ngx_inline void
 ngx_event_del_timer(ngx_event_t *ev, const char *func, unsigned int line)
-{//ngx_del_timer
+{ // ngx_del_timer
     char tmpbuf[128];
 
     snprintf(tmpbuf, sizeof(tmpbuf), "<%25s, %5d> ", func, line);
     ngx_log_debug3(NGX_LOG_DEBUG_EVENT, ev->log, 0,
                    "%s event timer del: %d: %M", tmpbuf,
-                    ngx_event_ident(ev->data), ev->timer.key);
-                    
+                   ngx_event_ident(ev->data), ev->timer.key);
+
     ngx_rbtree_delete(&ngx_event_timer_rbtree, &ev->timer);
 
 #if (NGX_DEBUG)
@@ -50,29 +44,29 @@ ngx_event_del_timer(ngx_event_t *ev, const char *func, unsigned int line)
 }
 
 /*
-1.ngx_event_s¿ÉÒÔÊÇÆÕÍ¨µÄepoll¶ÁÐ´ÊÂ¼þ(²Î¿¼ngx_event_connect_peer->ngx_add_conn»òÕßngx_add_event)£¬Í¨¹ý¶ÁÐ´ÊÂ¼þ´¥·¢
+1.ngx_event_så¯ä»¥æ˜¯æ™®é€šçš„epollè¯»å†™äº‹ä»¶(å‚è€ƒngx_event_connect_peer->ngx_add_connæˆ–è€…ngx_add_event)ï¼Œé€šè¿‡è¯»å†™äº‹ä»¶è§¦å‘
 
-2.Ò²¿ÉÒÔÊÇÆÕÍ¨¶¨Ê±Æ÷ÊÂ¼þ(²Î¿¼ngx_cache_manager_process_handler->ngx_add_timer(ngx_event_add_timer))£¬Í¨¹ýngx_process_events_and_timersÖÐµÄ
-epoll_wait·µ»Ø£¬¿ÉÒÔÊÇ¶ÁÐ´ÊÂ¼þ´¥·¢·µ»Ø£¬Ò²¿ÉÄÜÊÇÒòÎªÃ»»ñÈ¡µ½¹²ÏíËø£¬´Ó¶øµÈ´ý0.5s·µ»ØÖØÐÂ»ñÈ¡ËøÀ´¸úÐÂÊÂ¼þ²¢Ö´ÐÐ³¬Ê±ÊÂ¼þÀ´¸úÐÂÊÂ¼þ²¢ÇÒÅÐ¶Ï¶¨
-Ê±Æ÷Á´±íÖÐµÄ³¬Ê±ÊÂ¼þ£¬³¬Ê±ÔòÖ´ÐÐ´Ó¶øÖ¸ÏòeventµÄhandler£¬È»ºó½øÒ»²½Ö¸Ïò¶ÔÓ¦r»òÕßuµÄ->write_event_handler  read_event_handler
+2.ä¹Ÿå¯ä»¥æ˜¯æ™®é€šå®šæ—¶å™¨äº‹ä»¶(å‚è€ƒngx_cache_manager_process_handler->ngx_add_timer(ngx_event_add_timer))ï¼Œé€šè¿‡ngx_process_events_and_timersä¸­çš„
+epoll_waitè¿”å›žï¼Œå¯ä»¥æ˜¯è¯»å†™äº‹ä»¶è§¦å‘è¿”å›žï¼Œä¹Ÿå¯èƒ½æ˜¯å› ä¸ºæ²¡èŽ·å–åˆ°å…±äº«é”ï¼Œä»Žè€Œç­‰å¾…0.5sè¿”å›žé‡æ–°èŽ·å–é”æ¥è·Ÿæ–°äº‹ä»¶å¹¶æ‰§è¡Œè¶…æ—¶äº‹ä»¶æ¥è·Ÿæ–°äº‹ä»¶å¹¶ä¸”åˆ¤æ–­å®š
+æ—¶å™¨é“¾è¡¨ä¸­çš„è¶…æ—¶äº‹ä»¶ï¼Œè¶…æ—¶åˆ™æ‰§è¡Œä»Žè€ŒæŒ‡å‘eventçš„handlerï¼Œç„¶åŽè¿›ä¸€æ­¥æŒ‡å‘å¯¹åº”ræˆ–è€…uçš„->write_event_handler  read_event_handler
 
-3.Ò²¿ÉÒÔÊÇÀûÓÃ¶¨Ê±Æ÷expirtÊµÏÖµÄ¶ÁÐ´ÊÂ¼þ(²Î¿¼ngx_http_set_write_handler->ngx_add_timer(ngx_event_add_timer)),´¥·¢¹ý³Ì¼û2£¬Ö»ÊÇÔÚhandlerÖÐ²»»áÖ´ÐÐwrite_event_handler  read_event_handler
+3.ä¹Ÿå¯ä»¥æ˜¯åˆ©ç”¨å®šæ—¶å™¨expirtå®žçŽ°çš„è¯»å†™äº‹ä»¶(å‚è€ƒngx_http_set_write_handler->ngx_add_timer(ngx_event_add_timer)),è§¦å‘è¿‡ç¨‹è§2ï¼Œåªæ˜¯åœ¨handlerä¸­ä¸ä¼šæ‰§è¡Œwrite_event_handler  read_event_handler
 */
 
-
-//ngx_event_expire_timersÖÐÖ´ÐÐev->handler
-//ÔÚngx_process_events_and_timersÖÐ£¬µ±ÓÐÊÂ¼þÊ¹epoll_wait·µ»Ø£¬Ôò»áÖ´ÐÐ³¬Ê±µÄ¶¨Ê±Æ÷
-//×¢Òâ¶¨Ê±Æ÷µÄ³¬Ê±´¦Àí£¬²»Ò»¶¨¾ÍÊÇtimerÊ±¼ä³¬Ê±£¬³¬Ê±Îó²î¿ÉÄÜÎªtimer_resolution£¬Èç¹ûÃ»ÓÐÉèÖÃtimer_resolutionÔò¶¨Ê±Æ÷¿ÉÄÜÓÀÔ¶²»³¬Ê±£¬ÒòÎªepoll_wait²»·µ»Ø£¬ÎÞ·¨¸üÐÂÊ±¼ä
+// ngx_event_expire_timersä¸­æ‰§è¡Œev->handler
+// åœ¨ngx_process_events_and_timersä¸­ï¼Œå½“æœ‰äº‹ä»¶ä½¿epoll_waitè¿”å›žï¼Œåˆ™ä¼šæ‰§è¡Œè¶…æ—¶çš„å®šæ—¶å™¨
+// æ³¨æ„å®šæ—¶å™¨çš„è¶…æ—¶å¤„ç†ï¼Œä¸ä¸€å®šå°±æ˜¯timeræ—¶é—´è¶…æ—¶ï¼Œè¶…æ—¶è¯¯å·®å¯èƒ½ä¸ºtimer_resolutionï¼Œå¦‚æžœæ²¡æœ‰è®¾ç½®timer_resolutionåˆ™å®šæ—¶å™¨å¯èƒ½æ°¸è¿œä¸è¶…æ—¶ï¼Œå› ä¸ºepoll_waitä¸è¿”å›žï¼Œæ— æ³•æ›´æ–°æ—¶é—´
 static ngx_inline void
 ngx_event_add_timer(ngx_event_t *ev, ngx_msec_t timer, const char *func, unsigned int line)
-{//ngx_add_timer
-    ngx_msec_t      key;
-    ngx_msec_int_t  diff;
+{ // ngx_add_timer
+    ngx_msec_t key;
+    ngx_msec_int_t diff;
     char tmpbuf[128];
 
     key = ngx_current_msec + timer;
-    
-    if (ev->timer_set) { //Èç¹ûÖ®Ç°¸ÃevÒÑ¾­Ìí¼Ó¹ý£¬ÔòÏÈ°ÑÖ®Ç°µÄev¶¨Ê±Æ÷delµô£¬È»ºóÔÚÖØÐÂÌí¼Ó
+
+    if (ev->timer_set)
+    { // å¦‚æžœä¹‹å‰è¯¥evå·²ç»æ·»åŠ è¿‡ï¼Œåˆ™å…ˆæŠŠä¹‹å‰çš„evå®šæ—¶å™¨delæŽ‰ï¼Œç„¶åŽåœ¨é‡æ–°æ·»åŠ 
 
         /*
          * Use a previous timer value if difference between it and a new
@@ -80,13 +74,14 @@ ngx_event_add_timer(ngx_event_t *ev, ngx_msec_t timer, const char *func, unsigne
          * to minimize the rbtree operations for fast connections.
          */
 
-        diff = (ngx_msec_int_t) (key - ev->timer.key);
+        diff = (ngx_msec_int_t)(key - ev->timer.key);
 
-        if (ngx_abs(diff) < NGX_TIMER_LAZY_DELAY) {
+        if (ngx_abs(diff) < NGX_TIMER_LAZY_DELAY)
+        {
             snprintf(tmpbuf, sizeof(tmpbuf), "<%25s, %5d> ", func, line);
             ngx_log_debug4(NGX_LOG_DEBUG_EVENT, ev->log, 0,
                            "%s event timer: %d, old: %M, new: %M, ", tmpbuf,
-                            ngx_event_ident(ev->data), ev->timer.key, key);
+                           ngx_event_ident(ev->data), ev->timer.key, key);
             return;
         }
 
@@ -97,12 +92,11 @@ ngx_event_add_timer(ngx_event_t *ev, ngx_msec_t timer, const char *func, unsigne
     snprintf(tmpbuf, sizeof(tmpbuf), "<%25s, %5d> ", func, line);
     ngx_log_debug4(NGX_LOG_DEBUG_EVENT, ev->log, 0,
                    "%s event timer add fd:%d, expire-time:%M s, timer.key:%M", tmpbuf,
-                    ngx_event_ident(ev->data), timer / 1000, ev->timer.key);
+                   ngx_event_ident(ev->data), timer / 1000, ev->timer.key);
 
     ngx_rbtree_insert(&ngx_event_timer_rbtree, &ev->timer);
 
     ev->timer_set = 1;
 }
-
 
 #endif /* _NGX_EVENT_TIMER_H_INCLUDED_ */
