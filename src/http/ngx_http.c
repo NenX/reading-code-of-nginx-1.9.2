@@ -206,6 +206,9 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_http_core_loc_conf_t    *clcf;
     ngx_http_core_srv_conf_t   **cscfp;
     ngx_http_core_main_conf_t   *cmcf;
+    // conf 指向 ngx_cycle_s->conf_ctx 数组中 http 模块的内存位置,  
+    // 因为 ngx_http_module 的 ctx 为 ngx_http_module_ctx, ngx_http_module_ctx 没有实现 create_conf, 所以 *conf 为空
+    ngx_log_stderr(0, "<%s:%d %s>: conf -> %p, *conf -> %p", __FILE__, __LINE__, __FUNCTION__, conf, *(void **)conf);
 
     /* the main http context */
     ctx = ngx_pcalloc(cf->pool, sizeof(ngx_http_conf_ctx_t));
@@ -321,6 +324,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     pcf = *cf; //零时保存在解析到http{}时候,在这之前的cf
     cf->ctx = ctx;//零时指向这块新分配的ctx,为存储ngx_http_core_commands开辟的空间
+    ngx_log_stderr(0, "<%s:%d %s>: cf->ctx -> %p, conf -> %p",  __FILE__, __LINE__, __FUNCTION__, cf->ctx, *(ngx_http_conf_ctx_t **) conf);
 
     //执行各个模块的preconfiguration
     for (m = 0; ngx_modules[m]; m++) {

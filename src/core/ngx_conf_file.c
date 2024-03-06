@@ -168,7 +168,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)  //参考:http://blog.chinau
 #endif
 
     if (filename) {
-
+    ngx_log_stderr(0, "<%s:%d %s>: filename -> %s | %d",  __FILE__, __LINE__, __FUNCTION__, filename->data, sizeof(void *));
         /* open configuration file */
 
         fd = ngx_open_file(filename->data, NGX_FILE_RDONLY, NGX_FILE_OPEN, 0);
@@ -260,7 +260,9 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)  //参考:http://blog.chinau
     for ( ;; ) {
 
         /* 读取文件中的内容放到缓冲区中，并进行解析，把解析的结果放到了cf->args 里面， 指令的每个单词都在数组中占一个位置，比如 set debug off  ，那么数组中存三个位置。*/
-        rc = ngx_conf_read_token(cf); //读取文件 
+        rc = ngx_conf_read_token(cf); //读取文件
+        // ngx_str_t * str = (ngx_str_t *)(cf->args->elts); 
+        // ngx_log_stderr(0, "<%s:%d %s>: ngx_conf_read_token -> %s, %s", __FILE__, __LINE__, __FUNCTION__, str[0].data, str[1].data);
 
         /*
          * ngx_conf_read_token() may return
@@ -401,6 +403,7 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
     char buf[2560];
     char tmp[256];
     memset(buf, 0, sizeof(buf));
+    ngx_log_stderr(0, "<%s:%d %s>: ngx_conf_handler -> %s, %s", __FILE__, __LINE__, __FUNCTION__, name[0].data, name[1].data);
    
    for(ia = 0; ia < cf->args->nelts; ia++) {
         memset(tmp, 0, sizeof(tmp));
@@ -409,6 +412,7 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
     }
     //printf("yang test:%p %s <%s, %u>\n", cf->ctx, buf, __FUNCTION__, __LINE__); //这个打印出来的内容为整行的内容，如yang test:error_log logs/error.log debug   <ngx_conf_handler, 407>
    
+    int found_mytest1 = ngx_strcmp("location", name->data);
    
     found = 0;
 
@@ -427,6 +431,7 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
             if (ngx_strcmp(name->data, cmd->name.data) != 0) {
                 continue;
             }
+            int found_mytest2 = ngx_strcmp("location", cmd->name.data);
 
             found = 1;
 
@@ -491,7 +496,7 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
             /* set up the directive's configuration context */
 
             conf = NULL;
-
+            int found_mytest = ngx_strcmp("location", cmd->name.data);
             /* 例如执行到http行，会走第二个if，确定http一级NGX_CORE_MODULE类型在ngx_cycle_s->conf_ctx中的位置，然后在继续后面的set函数，在
                 该函数中开辟空间，并让conf_ctx[]数组里面的具体成员指针指向该空间，从而使http{}空间和ngx_cycle_s关联起来 */
 
@@ -519,8 +524,11 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
 
                 if (confp) { //图形化参考:深入理解NGINX中的图9-2  图10-1  图4-2，结合图看,并可以配合http://tech.uc.cn/?p=300看
                     conf = confp[ngx_modules[i]->ctx_index]; //上一行是确定在ngx_http_conf_ctx_t中main srv loc中的那个成员头，这个则是对应头部下面的数组指针中的具体那一个
+                    ngx_log_stderr(0, "<%s:%d %s>: confp -> %p, conf -> %p", __FILE__, __LINE__, __FUNCTION__, confp, conf);
                 }
             }
+            ngx_str_t * str = (ngx_str_t *)(cf->args->elts); 
+            ngx_log_stderr(0, "<%s:%d %s>: cmd set ->%s, %s === %s", __FILE__, __LINE__, __FUNCTION__, str[0].data, str[1].data, cmd->name.data);
 
             /* 例如解析到http {，则执行ngx_http_block，在该函数中会把http模块对应的srv local main配置空间赋值给conf,也就是ngx_cycle_s->conf_ctx[]对应的模块 */
             rv = cmd->set(cf, cmd, conf); 
@@ -903,6 +911,7 @@ ngx_conf_read_token(ngx_conf_t *cf)//参考http://blog.chinaunix.net/uid-2633525
                 }
                 *dst = '\0';
                 word->len = len;
+                // ngx_log_stderr(0, "<%s:%d %s>: word -> %s",  __FILE__, __LINE__, __FUNCTION__, word->data);
 
                 if (ch == ';') {//遇到分号,表示一个简单配置项解析结束.   
                     return NGX_OK;

@@ -4572,6 +4572,7 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
     pcf = *cf; //保存server{}中的cf
     cf->ctx = ctx; //指向为新的server{}开辟的ngx_http_conf_ctx_t,用于在解析location{}里面的配置的时候用,
     cf->cmd_type = NGX_HTTP_SRV_CONF; 
+    ngx_log_stderr(0, "<%s:%d %s>: cf->ctx -> %p, http_ctx -> %p",  __FILE__, __LINE__, __FUNCTION__, cf->ctx, http_ctx);
 
     //这里的cf是为server{}开辟的空间信息，用来存储server{}中的相关解析项，和函数参数cf->ctx中的空间不一样，参数cf->ctx空间是http{}存储空间
     rv = ngx_conf_parse(cf, NULL); 
@@ -5300,6 +5301,7 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
     save = *cf; //保存解析location{}前的cf配置
     cf->ctx = ctx; //指向为location{}创建的空间
     cf->cmd_type = NGX_HTTP_LOC_CONF;
+    ngx_log_stderr(0, "<%s:%d %s>: cf->ctx -> %p, pctx -> %p",  __FILE__, __LINE__, __FUNCTION__, cf->ctx, pctx);
     
     rv = ngx_conf_parse(cf, NULL);
 

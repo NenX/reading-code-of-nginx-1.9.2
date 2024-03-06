@@ -117,7 +117,7 @@ mytest_post_handler(ngx_http_request_t *r)
 
     // 定义发给用户的http包体内容，格式为：
     // stock[…],Today current price: …, volumn: …
-    ngx_str_t output_format = ngx_string("stock[%V],Today current price: %V, volumn: %V");
+    ngx_str_t output_format = ngx_string("<meta charset='utf8' />stock[%V],Today current price: %V, volumn: %V");
 
     // 计算待发送包体的长度
     int bodylen = output_format.len + myctx->stock[0].len + myctx->stock[1].len + myctx->stock[4].len - 6;
@@ -134,7 +134,7 @@ mytest_post_handler(ngx_http_request_t *r)
     out.buf = b;
     out.next = NULL;
     // 设置Content-Type，注意汉字编码新浪服务器使用了GBK
-    static ngx_str_t type = ngx_string("text/plain; charset=GBK");
+    static ngx_str_t type = ngx_string("text/html; charset=utf8");
     r->headers_out.content_type = type;
     r->headers_out.status = NGX_HTTP_OK;
 
