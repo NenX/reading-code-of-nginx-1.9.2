@@ -1,11 +1,32 @@
 {
     "files.associations": {
-        "*.c": "c",
+        "*.下载": "javascript",
+        ".env.test.sh": "shellscript",
         ".env.sh": "shellscript",
+        ".env.ps1": "powershell",
+        "*.c": "c",
         ".env.prod.sh": "shellscript",
         "uri编码.C": "cpp",
         "ngx_config.h": "c",
         "ngx_core.h": "c",
-        "type_traits": "c"
-    }
+        "type_traits": "c",
+        "ngx_event.h": "c",
+        "ngx_times.h": "c",
+        "cmath": "c"
+    },
+    "favorites.resources": [
+        {
+            "filePath": "src/event/ngx_event.c",
+            "group": "Default"
+        },
+        {
+            "filePath": "src/event/modules/ngx_epoll_module.c",
+            "group": "Default"
+        },
+        {
+            "filePath": "src/event/ngx_event_accept.c",
+            "group": "Default"
+        }
+    ],
+    "favorites.sortOrder": "ASC"
 }
