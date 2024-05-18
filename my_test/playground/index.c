@@ -83,7 +83,7 @@ static ngx_int_t ngx_http_test_ngx_list_handler(ngx_http_request_t *r)
     // ss
 
     char my_buf[1024];
-    char *title = "<h1>test ngx_list</h1>";
+    char *title = "<h1>playground !</h1>";
     ngx_memcpy(b->last, title, strlen(title));
     b->last = b->last + strlen(title);
     for (size_t i = 0;; i++)
@@ -142,7 +142,7 @@ static char *ngx_http_test_ngx_list(ngx_conf_t *cf, ngx_command_t *cmd, void *co
 }
 
 static ngx_command_t ngx_http_test_ngx_list_commands[] = {
-    {ngx_string("test_ngx_list"),
+    {ngx_string("playground"),
      NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF | NGX_HTTP_LMT_CONF | NGX_CONF_NOARGS,
 
      /*
@@ -156,7 +156,7 @@ static ngx_command_t ngx_http_test_ngx_list_commands[] = {
     ngx_null_command};
 
 // 暂且不管如何实现处理请求的ngx_http_test_ngx_list_handler方法，如果没有什么工作是必须在HTTP框架初始化时完成的，那就不必实现ngx_http_module_t的8个回调方法，可以像下面这样定义ngx_http_module_t接口。
-static ngx_http_module_t ngx_test_ngx_list_ctx = {
+static ngx_http_module_t playground_ctx = {
     NULL,
     NULL,
     NULL,
@@ -167,9 +167,9 @@ static ngx_http_module_t ngx_test_ngx_list_ctx = {
     NULL};
 
 // 定义test_ngx_list模块：
-ngx_module_t ngx_test_ngx_list = {
+ngx_module_t playground = {
     NGX_MODULE_V1,
-    &ngx_test_ngx_list_ctx,
+    &playground_ctx,
     ngx_http_test_ngx_list_commands,
     NGX_HTTP_MODULE,
     NULL,
