@@ -16,14 +16,14 @@
 Nginx在调用例子中的ngx_http_test_ngx_queue_handler方法时是阻塞了整个Nginx
 进程的，所以ngx_http_test_ngx_queue_handler或类似的处理方法中是不能有耗时很长的操作的。
 */
-typedef struct
+static struct user_data_s
 {
     ngx_str_t str;
     size_t num;
     ngx_queue_t q;
-} user_data;
-
-ngx_int_t my_cmp(ngx_queue_t *a, ngx_queue_t *b)
+};
+typedef struct user_data_s user_data;
+static ngx_int_t my_cmp(ngx_queue_t *a, ngx_queue_t *b)
 {
     user_data *ua = ngx_queue_data(a, user_data, q);
     user_data *ub = ngx_queue_data(b, user_data, q);

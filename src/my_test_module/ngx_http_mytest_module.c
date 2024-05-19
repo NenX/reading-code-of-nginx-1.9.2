@@ -25,7 +25,18 @@ static ngx_int_t ngx_http_mytest_handler(ngx_http_request_t *r)
         return NGX_HTTP_NOT_ALLOWED;
     }
     printf("sbb =============\n");
+    char *strs1[] = {"aa", "bb", "cc", "dd", "ee"};
+    char **strs2 = strs1;
+    printf("!!!!!!!!!!!!~~0 strs1 -> %s\n", strs1[0]);
+    printf("!!!!!!!!!!!!~~0 strs1 -> %s\n", strs1[1]);
+    printf("!!!!!!!!!!!!~~1 strs1 -> %s\n", *strs1);
+    printf("!!!!!!!!!!!!~~1 strs1 -> %s\n", *(strs1 + 1));
+    printf("=================================================\n");
 
+    printf("!!!!!!!!!!!!~~0 strs2 -> %s\n", strs2[0]);
+    printf("!!!!!!!!!!!!~~0 strs2 -> %s\n", strs2[1]);
+    printf("!!!!!!!!!!!!~~1 strs2 -> %s\n", *strs2);
+    printf("!!!!!!!!!!!!~~1 strs2 -> %s\n", *(strs2 + 1));
     ngx_str_t *tartget_str;
     ngx_list_part_t *traget_part;
     ngx_list_t *testlist = ngx_list_create(r->pool, 2, sizeof(ngx_str_t));
@@ -59,7 +70,7 @@ static ngx_int_t ngx_http_mytest_handler(ngx_http_request_t *r)
 
             i = 0;
         }
-        printf("~~~~~~~~~~~~~~~ %*s,%d\n", tartget_str[i].len, tartget_str[i].data,tartget_str[i].len);
+        printf("~~~~~~~~~~~~~~~ %*s,%d\n", tartget_str[i].len, tartget_str[i].data, tartget_str[i].len);
     }
 
     printf("sbb ===============\n");

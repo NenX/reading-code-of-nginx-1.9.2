@@ -17,6 +17,15 @@ Nginx在调用例子中的ngx_http_test_ngx_list_handler方法时是阻塞了整
 进程的，所以ngx_http_test_ngx_list_handler或类似的处理方法中是不能有耗时很长的操作的。
 */
 
+static struct user_data_s
+{
+    ngx_rbtree_node_t rbtree_node;
+    ngx_str_t str;
+    size_t num;
+    ngx_queue_t q;
+};
+typedef struct user_data_s user_data;
+
 static void set_data(ngx_list_t *testlist)
 {
     ngx_str_t *tartget_str;
@@ -87,7 +96,7 @@ static void do_test(ngx_http_request_t *r, ngx_buf_t *b)
     tartget_str = ngx_array_push(testarr);
     ngx_str_set(tartget_str, "sb3");
     tartget_str = ngx_array_push(testarr);
-    ngx_str_set(tartget_str, "sb444444444444444");
+    ngx_str_set(tartget_str, "sb4");
 
     tartget_str = testarr->elts;
 
@@ -100,11 +109,31 @@ static void do_test(ngx_http_request_t *r, ngx_buf_t *b)
         append_buf(b, my_buf);
     }
 
-    // ngx_rbtree_t test_rbtree;
-    // ngx_rbtree_t * test_rbtree_p;
-    // ngx_rbtree_node_t test_sentinal;
+    ngx_rbtree_t test_rbtree;
+    ngx_rbtree_t *test_rbtree_p = &test_rbtree;
+    ngx_rbtree_node_t test_sentinal;
 
-    // ngx_rbtree_init(test_rbtree_p,&test_sentinal,ngx_rbtree_insert_value);
+    ngx_rbtree_init(test_rbtree_p, &test_sentinal, ngx_rbtree_insert_value);
+
+    user_data users[5];
+    ngx_int_t nums[] = {88, 22, 9, 19, 15};
+    char *strs[] = {"aa", "bb", "cc", "dd", "ee"};
+
+    for (size_t i = 0; i < 5; i++)
+    {
+        users[i].num = nums[i];
+        ngx_str_set(&users[i].str, strs[i]);
+        users[i].rbtree_node.key = nums[i];
+        ngx_rbtree_insert(test_rbtree_p, &users[i].rbtree_node);
+    }
+    user_data *min_node_p;
+    min_node_p = ngx_rbtree_min(test_rbtree_p->root, &test_sentinal);
+
+    bzero(my_buf, 1024);
+    sprintf(my_buf, "<li>rbtree min: %*s</li>", (int)min_node_p->str.len, min_node_p->str.data);
+    printf("???:%s", min_node_p->str.data);
+
+    append_buf(b, my_buf);
 }
 static ngx_int_t ngx_http_test_ngx_list_handler(ngx_http_request_t *r)
 {
@@ -124,10 +153,7 @@ static ngx_int_t ngx_http_test_ngx_list_handler(ngx_http_request_t *r)
     append_buf(b, "<h1> Playgound !</h1>");
 
     do_test(r, b);
-    // char *strs1[] = {"aa", "bb", "cc", "dd", "ee"};
-    // char **strs2 = {"aa", "bb", "cc", "dd", "ee"};
-    // printf("!!!!!!!!!!!!~~ strs1 -> %p\n", strs1[1]);
-    // printf("!!!!!!!!!!!!~~ strs2 -> %p\n", strs2[1]);
+
     b->last_buf = 1;
 
     r->headers_out.content_length_n = b->last - b->start;
@@ -164,7 +190,7 @@ static char *ngx_http_test_ngx_list(ngx_conf_t *cf, ngx_command_t *cmd, void *co
 }
 
 static ngx_command_t ngx_http_test_ngx_list_commands[] = {
-    {ngx_string("playground"),
+    {ngx_string("test_ngx_rbtree"),
      NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF | NGX_HTTP_LMT_CONF | NGX_CONF_NOARGS,
 
      /*
@@ -189,7 +215,7 @@ static ngx_http_module_t playground_ctx = {
     NULL};
 
 // 定义test_ngx_list模块：
-ngx_module_t playground = {
+ngx_module_t ngx_test_rbtree = {
     NGX_MODULE_V1,
     &playground_ctx,
     ngx_http_test_ngx_list_commands,
