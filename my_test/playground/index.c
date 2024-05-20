@@ -54,26 +54,48 @@ static void do_test(ngx_http_request_t *r, ngx_buf_t *b)
     ngx_list_t *testlist = ngx_list_create(r->pool, 2, sizeof(ngx_str_t));
 
     set_data(testlist);
-    traget_part = &testlist->part;
 
+    // traget_part = &testlist->part;
+
+    // tartget_str = traget_part->elts;
+    // for (size_t i = 0;; i++)
+    // {
+    //     bzero(my_buf, 1024);
+    //     /* code */
+    //     if (i >= traget_part->nelts)
+    //     {
+    //         if (traget_part->next == NULL)
+    //             break;
+
+    //         traget_part = traget_part->next;
+    //         tartget_str = traget_part->elts;
+
+    //         i = 0;
+    //     }
+    //     sprintf(my_buf, "<li>list: %*s,%d</li>", (int)tartget_str[i].len, tartget_str[i].data, (int)tartget_str[i].len);
+
+    //     append_buf(b, my_buf);
+    // }
+    traget_part = &testlist->part;
     tartget_str = traget_part->elts;
-    for (size_t i = 0;; i++)
+    size_t idx = 0;
+    while (1)
     {
         bzero(my_buf, 1024);
-        /* code */
-        if (i >= traget_part->nelts)
+
+        if (idx >= traget_part->nelts)
         {
             if (traget_part->next == NULL)
+            {
                 break;
-
+            }
             traget_part = traget_part->next;
-            tartget_str = traget_part->elts;
-
-            i = 0;
+            idx = 0;
         }
-        sprintf(my_buf, "<li>list: %*s,%d</li>", (int)tartget_str[i].len, tartget_str[i].data, (int)tartget_str[i].len);
-
+        tartget_str = tartget_str + idx;
+        sprintf(my_buf, "<li> test list: %*s,%d</li>", (int)tartget_str[idx].len, tartget_str[idx].data, idx);
         append_buf(b, my_buf);
+        idx++;
     }
 
     ngx_array_t *testarr;
