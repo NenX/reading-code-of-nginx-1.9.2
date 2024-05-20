@@ -131,8 +131,17 @@ static void do_test(ngx_http_request_t *r, ngx_buf_t *b)
 
     bzero(my_buf, 1024);
     sprintf(my_buf, "<li>rbtree min: %*s</li>", (int)min_node_p->str.len, min_node_p->str.data);
-    printf("???:%s", min_node_p->str.data);
 
+    ngx_uint_t lookupkey = 19;
+    min_node_p = test_rbtree_p->root;
+    while (min_node_p != test_rbtree_p->sentinel)
+    {
+        if (min_node_p->rbtree_node.key == lookupkey)
+            break;
+        min_node_p = min_node_p->rbtree_node.key > lookupkey ? min_node_p->rbtree_node.left : min_node_p->rbtree_node.right;
+    }
+    bzero(my_buf, 1024);
+    sprintf(my_buf, "<li>find %u : %*s</li>", lookupkey, (int)min_node_p->str.len, min_node_p->str.data);
     append_buf(b, my_buf);
 }
 static ngx_int_t ngx_http_test_ngx_list_handler(ngx_http_request_t *r)
