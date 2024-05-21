@@ -1,0 +1,6 @@
+ngx_addon_name=test_ngx_hash
+
+HTTP_MODULES="$HTTP_MODULES test_ngx_hash"
+
+NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_addon_dir/index.c"
+

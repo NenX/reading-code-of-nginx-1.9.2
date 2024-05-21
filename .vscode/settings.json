@@ -12,7 +12,8 @@
         "type_traits": "c",
         "ngx_event.h": "c",
         "ngx_times.h": "c",
-        "cmath": "c"
+        "cmath": "c",
+        "typeinfo": "c"
     },
     "favorites.resources": [
         {

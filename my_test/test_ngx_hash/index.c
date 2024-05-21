@@ -16,7 +16,16 @@
 Nginx在调用例子中的ngx_http_test_ngx_list_handler方法时是阻塞了整个Nginx
 进程的，所以ngx_http_test_ngx_list_handler或类似的处理方法中是不能有耗时很长的操作的。
 */
-
+static struct user_data_s
+{
+    ngx_str_t str;
+    size_t num;
+};
+static char server_name1[1024];
+static char server_name2[1024];
+static char server_name3[1024];
+static char server_name_find[1024];
+typedef struct user_data_s user_data;
 static void set_data(ngx_list_t *testlist)
 {
     ngx_str_t *tartget_str;
@@ -43,91 +52,94 @@ static void append_buf(ngx_buf_t *b, char *str)
     ngx_memcpy(b->last, str, strlen(str));
     b->last = b->last + strlen(str);
 }
-
+ngx_module_t test_ngx_hash;
 static void do_test(ngx_http_request_t *r, ngx_buf_t *b)
 {
+
+    ngx_memcpy(server_name1, "*.test.com", strlen("*.test.com"));
+    ngx_memcpy(server_name2, "www.test.*", strlen("www.test.*"));
+    ngx_memcpy(server_name3, "www.test.com", strlen("www.test.com"));
+
+    ngx_http_core_loc_conf_t *clcf;
+    clcf = ngx_http_get_module_loc_conf(r, test_ngx_hash);
 
     char my_buf[1024];
 
     ngx_str_t *tartget_str;
     ngx_list_part_t *traget_part;
-    ngx_list_t *testlist = ngx_list_create(r->pool, 2, sizeof(ngx_str_t));
 
-    set_data(testlist);
+    ngx_hash_init_t hash;
+    ngx_hash_keys_arrays_t ha;
+    ngx_hash_combined_t combined_hash;
 
-    // traget_part = &testlist->part;
+    ngx_memzero(&ha, sizeof(ngx_hash_keys_arrays_t));
 
-    // tartget_str = traget_part->elts;
-    // for (size_t i = 0;; i++)
-    // {
-    //     bzero(my_buf, 1024);
-    //     /* code */
-    //     if (i >= traget_part->nelts)
-    //     {
-    //         if (traget_part->next == NULL)
-    //             break;
+    ha.temp_pool = ngx_create_pool(16384, r->connection->log);
+    ha.pool = r->pool;
 
-    //         traget_part = traget_part->next;
-    //         tartget_str = traget_part->elts;
+    ngx_hash_keys_array_init(&ha, NGX_HASH_LARGE);
 
-    //         i = 0;
-    //     }
-    //     sprintf(my_buf, "<li>list: %*s,%d</li>", (int)tartget_str[i].len, tartget_str[i].data, (int)tartget_str[i].len);
+    user_data users[3] = {
+        strlen(server_name1),
+        server_name1,
+        0,
+        strlen(server_name2),
+        server_name2,
+        1,
+        strlen(server_name3),
+        server_name3,
+        2,
+    };
 
-    //     append_buf(b, my_buf);
-    // }
-    traget_part = &testlist->part;
-    tartget_str = traget_part->elts;
-    size_t idx = 0;
-    while (1)
+    ngx_hash_add_key(&ha, &users[0].str, users + 0, NGX_HASH_WILDCARD_KEY);
+    ngx_hash_add_key(&ha, &users[1].str, users + 1, NGX_HASH_WILDCARD_KEY);
+    ngx_hash_add_key(&ha, &users[2].str, users + 2, NGX_HASH_WILDCARD_KEY);
+
+    hash.key = ngx_hash_key_lc;
+    hash.max_size = 100;
+    hash.bucket_size = 48;
+    hash.name = "test hash";
+    hash.pool = r->pool;
+
+    if (ha.keys.nelts)
+    {
+        hash.hash = &combined_hash.hash;
+        hash.temp_pool = NULL;
+        ngx_hash_init(&hash, ha.keys.elts, ha.keys.nelts);
+    }
+    if (ha.dns_wc_head.nelts)
+    {
+        hash.hash = NULL;
+        hash.temp_pool = ha.temp_pool;
+        ngx_hash_wildcard_init(&hash, ha.dns_wc_head.elts, ha.dns_wc_head.nelts);
+        combined_hash.wc_head = hash.hash;
+    }
+    if (ha.dns_wc_tail.nelts)
+    {
+        hash.hash = NULL;
+        hash.temp_pool = ha.temp_pool;
+        ngx_hash_wildcard_init(&hash, ha.dns_wc_tail.elts, ha.dns_wc_tail.nelts);
+        combined_hash.wc_tail = hash.hash;
+    }
+    ngx_destroy_pool(ha.temp_pool);
+
+    ngx_memcpy(server_name_find, "www.test.org", strlen("www.test.org"));
+
+    user_data user_find = {
+        strlen(server_name_find),
+        server_name_find,
+        99,
+    };
+
+
+    user_data *target = ngx_hash_find_combined(&combined_hash, ngx_hash_key_lc(user_find.str.data, user_find.str.len), user_find.str.data, user_find.str.len);
+    if (target != NULL)
     {
         bzero(my_buf, 1024);
 
-        if (idx >= traget_part->nelts)
-        {
-            if (traget_part->next == NULL)
-            {
-                break;
-            }
-            traget_part = traget_part->next;
-            tartget_str = traget_part->elts;
-            idx = 0;
-        }
-        tartget_str = tartget_str + idx;
-        sprintf(my_buf, "<li> test list: %*s,%d</li>", (int)tartget_str->len, tartget_str->data, idx);
-        append_buf(b, my_buf);
-        idx++;
-    }
-
-    ngx_array_t *testarr;
-
-    testarr = ngx_array_create(r->pool, 3, sizeof(ngx_str_t));
-
-    tartget_str = ngx_array_push(testarr);
-    ngx_str_set(tartget_str, "sb1");
-    tartget_str = ngx_array_push(testarr);
-    ngx_str_set(tartget_str, "sb2");
-    tartget_str = ngx_array_push(testarr);
-    ngx_str_set(tartget_str, "sb3");
-    tartget_str = ngx_array_push(testarr);
-    ngx_str_set(tartget_str, "sb444444444444444");
-
-    tartget_str = testarr->elts;
-
-    for (size_t i = 0; i < testarr->nelts; i++)
-    {
-        bzero(my_buf, 1024);
-
-        sprintf(my_buf, "<li>dynamic array: %*s,%d</li>", (int)tartget_str[i].len, tartget_str[i].data, i);
-
+        sprintf(my_buf, "<li> hash find !!!!!!!!!!!: %*s,%d</li>", (int)target->str.len, target->str.data, target->num);
         append_buf(b, my_buf);
     }
-
-    // ngx_rbtree_t test_rbtree;
-    // ngx_rbtree_t * test_rbtree_p;
-    // ngx_rbtree_node_t test_sentinal;
-
-    // ngx_rbtree_init(test_rbtree_p,&test_sentinal,ngx_rbtree_insert_value);
 }
 static ngx_int_t ngx_http_test_ngx_list_handler(ngx_http_request_t *r)
 {
@@ -144,7 +156,7 @@ static ngx_int_t ngx_http_test_ngx_list_handler(ngx_http_request_t *r)
     if (b == NULL)
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
 
-    append_buf(b, "<h1> Playgound !</h1>");
+    append_buf(b, "<h1> test_ngx_hash !</h1>");
 
     do_test(r, b);
     // char *strs1[] = {"aa", "bb", "cc", "dd", "ee"};
@@ -187,7 +199,7 @@ static char *ngx_http_test_ngx_list(ngx_conf_t *cf, ngx_command_t *cmd, void *co
 }
 
 static ngx_command_t ngx_http_test_ngx_list_commands[] = {
-    {ngx_string("playground"),
+    {ngx_string("test_ngx_hash"),
      NGX_HTTP_MAIN_CONF | NGX_HTTP_SRV_CONF | NGX_HTTP_LOC_CONF | NGX_HTTP_LMT_CONF | NGX_CONF_NOARGS,
 
      /*
@@ -212,7 +224,7 @@ static ngx_http_module_t playground_ctx = {
     NULL};
 
 // 定义test_ngx_list模块：
-ngx_module_t playground = {
+ngx_module_t test_ngx_hash = {
     NGX_MODULE_V1,
     &playground_ctx,
     ngx_http_test_ngx_list_commands,
