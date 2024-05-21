@@ -221,6 +221,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     *(ngx_http_conf_ctx_t **) conf = ctx; //图形化参考:深入理解NGINX中的图9-2  图10-1  图4-2，结合图看,并可以配合http://tech.uc.cn/?p=300看
 
     /* count the number of the http modules and set up their indices */
+    ngx_log_stderr(0, "<%s:%d %s>: conf -> %p, *conf -> %p", __FILE__, __LINE__, __FUNCTION__, conf, *(void **)conf);
 
     ngx_http_max_module = 0;
     for (m = 0; ngx_modules[m]; m++) {
@@ -258,6 +259,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     if (ctx->loc_conf == NULL) {
         return NGX_CONF_ERROR;
     }
+    ngx_log_stderr(0, "<%s:%d %s>: ctx->main_conf -> %p, ctx->srv_conf -> %p , ctx->loc_conf -> %p \n", __FILE__, __LINE__, __FUNCTION__, ctx->main_conf, ctx->srv_conf, ctx->loc_conf);
 
     /*
      * create the main_conf's, the null srv_conf's, and the null loc_conf's

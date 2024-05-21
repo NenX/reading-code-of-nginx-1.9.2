@@ -303,6 +303,8 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     ngx_queue_init(&cycle->reusable_connections_queue);
 
     cycle->conf_ctx = ngx_pcalloc(pool, ngx_max_module * sizeof(void *));
+
+    ngx_log_stderr(0, "<%s:%d %s>:cycle->conf_ct ->%p ", __FILE__, __LINE__, __FUNCTION__, cycle->conf_ctx);
     if (cycle->conf_ctx == NULL)
     {
         ngx_destroy_pool(pool);

@@ -5052,6 +5052,9 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
     ctx->srv_conf = pctx->srv_conf; //指向父的srv //图形化参考:深入理解NGINX中的图9-2  图10-1  图4-2，结合图看,并可以配合http://tech.uc.cn/?p=300看
 
     ctx->loc_conf = ngx_pcalloc(cf->pool, sizeof(void *) * ngx_http_max_module);
+
+    ngx_log_stderr(0, "<%s:%d %s>: this ctx->loc_con -> %p",  __FILE__, __LINE__, __FUNCTION__, ctx->loc_conf);
+
     if (ctx->loc_conf == NULL) {
         return NGX_CONF_ERROR;
     }
