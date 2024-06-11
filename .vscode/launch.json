@@ -5,13 +5,38 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(gdb) Launch",
+            "name": "(gdb) Attach",
+            "type": "cppdbg",
+            "request": "attach",
+            
+            "program": "${workspaceFolder}/objs/nginx",
+            "sourceFileMap": {
+                "src": "${workspaceFolder}/src"
+            },
+            "postDebugTask": "build and run",
+            "MIMode": "gdb",
+            "processId":"${command:pickProcess}",
+
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "(gdb) Launch 单进程",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/objs/nginx",
-            "args": [
-            ],
-            "sourceFileMap":{
+            "args": [],
+            "sourceFileMap": {
                 "src": "${workspaceFolder}/src"
             },
             "preLaunchTask": "build",
@@ -32,7 +57,45 @@
                     "ignoreFailures": true
                 }
             ]
+        },
+        {
+            "name": "(gdb) Launch 多进程",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/objs/nginx",
+            "args": [],
+            "sourceFileMap": {
+                "src": "${workspaceFolder}/src"
+            },
+            "preLaunchTask": "build",
+            "postDebugTask": "killall",
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "set follow-fork-mode child",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "只调试子进程",
+                    "text": "set detach-on-fork on",
+                    "ignoreFailures": true
+                },
+            ]
         }
-
     ]
 }

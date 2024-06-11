@@ -16,7 +16,33 @@
 Nginx在调用例子中的ngx_http_test_ngx_list_handler方法时是阻塞了整个Nginx
 进程的，所以ngx_http_test_ngx_list_handler或类似的处理方法中是不能有耗时很长的操作的。
 */
+static ngx_int_t ngx_http_test_ngx_list_handler(ngx_http_request_t *r);
+static ngx_int_t
+ngx_http_playgound_handler(ngx_http_request_t *r)
+{
+    ngx_int_t rc;
 
+    return ngx_http_test_ngx_list_handler(r);
+}
+
+static ngx_int_t
+ngx_http_dav_init(ngx_conf_t *cf)
+{
+    ngx_http_handler_pt *h;
+    ngx_http_core_main_conf_t *cmcf;
+
+    cmcf = ngx_http_conf_get_module_main_conf(cf, ngx_http_core_module);
+
+    h = ngx_array_push(&cmcf->phases[NGX_HTTP_CONTENT_PHASE].handlers);
+    if (h == NULL)
+    {
+        return NGX_ERROR;
+    }
+
+    *h = ngx_http_playgound_handler;
+
+    return NGX_OK;
+}
 static void set_data(ngx_list_t *testlist)
 {
     ngx_str_t *tartget_str;
@@ -46,7 +72,7 @@ static void append_buf(ngx_buf_t *b, char *str)
 
 static void do_test(ngx_http_request_t *r, ngx_buf_t *b)
 {
-
+    pid_t pp = getpid();
     char my_buf[1024];
 
     ngx_str_t *tartget_str;
@@ -94,7 +120,7 @@ static void do_test(ngx_http_request_t *r, ngx_buf_t *b)
             idx = 0;
         }
         tartget_str = tartget_str + idx;
-        sprintf(my_buf, "<li> test list: %*s,%d</li>", (int)tartget_str->len, tartget_str->data, idx);
+        sprintf(my_buf, "<li> test list xx: %*s, pid:   %d</li>", (int)tartget_str->len, tartget_str->data, pp);
         append_buf(b, my_buf);
         idx++;
     }
@@ -181,7 +207,7 @@ static char *ngx_http_test_ngx_list(ngx_conf_t *cf, ngx_command_t *cmd, void *co
 
     /*HTTP框架在处理用户请求进行到NGX_HTTP_CONTENT_PHASE阶段时，如果请求的主机域名、URI与test_ngx_list配置项所在的配置块相匹配，就将调用我们实现的ngx_http_test_ngx_list_handler方法处理这个请求*/
     // 该函数在ngx_http_core_content_phase中的ngx_http_finalize_request(r, r->content_handler(r));里面的r->content_handler(r)执行
-    clcf->handler = ngx_http_test_ngx_list_handler; // HTTP框架在接收完HTTP请求的头部后，会调用handler指向的方法
+    // clcf->handler = ngx_http_test_ngx_list_handler; // HTTP框架在接收完HTTP请求的头部后，会调用handler指向的方法
 
     return NGX_CONF_OK;
 }
@@ -203,7 +229,7 @@ static ngx_command_t ngx_http_test_ngx_list_commands[] = {
 // 暂且不管如何实现处理请求的ngx_http_test_ngx_list_handler方法，如果没有什么工作是必须在HTTP框架初始化时完成的，那就不必实现ngx_http_module_t的8个回调方法，可以像下面这样定义ngx_http_module_t接口。
 static ngx_http_module_t playground_ctx = {
     NULL,
-    NULL,
+    ngx_http_dav_init,
     NULL,
     NULL,
     NULL,

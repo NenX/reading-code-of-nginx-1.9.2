@@ -1668,8 +1668,9 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
     */
     events = epoll_wait(ep, event_list, (int)nevents, timer); // timer为-1表示无限等待   nevents表示最多监听多少个事件，必须大于0
     // EPOLL_WAIT如果没有读写事件或者定时器超时事件发生，则会进入睡眠，这个过程会让出CPU
-
+    pid_t pp = getpid();
     err = (events == -1) ? ngx_errno : 0;
+    printf("pid: %d\n", pp);
 
     // 当flags标志位指示要更新时间时，就是在这里更新的
     // 要摸ngx_timer_resolution毫秒超时后跟新时间，要摸epoll读写事件超时后跟新时间
@@ -1789,7 +1790,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
 #endif
             // 注意这里的c有可能是accept前的c，用于检测是否客户端发起tcp连接事件,accept返回成功后会重新创建一个ngx_connection_t，用来读写客户端的数据
             rev->ready = 1; // 表示已经有数据到了这里只是把accept成功前的 ngx_connection_t->read->ready置1，accept返回后会重新从连接池中获取一个ngx_connection_t
-            // flags参数中含有NGX_POST_EVENTS表示这批事件要延后处理
+            // FFF: ngx_process_events_and_timers 拿到锁, flags参数中含有NGX_POST_EVENTS表示这批事件要延后处理, 执行ngx_post_event(rev, queue), 不执行 rev->handler(rev);
             if (flags & NGX_POST_EVENTS)
             {
                 /*
@@ -1803,8 +1804,10 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
             }
             else
             {
+                // TIP: 1. ngx_epoll_process_events -> rev->handler(rev)
                 // 如果接收到客户端数据，这里为ngx_http_wait_request_handler
-                rev->handler(rev); // 如果为还没accept，则为ngx_event_process_init中设置为ngx_event_accept。如果已经建立连接，则读数据为ngx_http_process_request_line
+                // 如果为还没accept，则为ngx_event_process_init中设置为ngx_event_accept。如果已经建立连接，则读数据为ngx_http_process_request_line
+                rev->handler(rev);
             }
         }
 
@@ -1827,6 +1830,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
             }
 
             wev->ready = 1;
+            // FFF: ngx_process_events_and_timers 拿到锁, flags参数中含有NGX_POST_EVENTS表示这批事件要延后处理, 执行 ngx_post_event(wev, &ngx_posted_events), 不执行 wev->handler(wev);
 
             if (flags & NGX_POST_EVENTS)
             {

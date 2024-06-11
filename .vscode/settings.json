@@ -13,7 +13,8 @@
         "ngx_event.h": "c",
         "ngx_times.h": "c",
         "cmath": "c",
-        "typeinfo": "c"
+        "typeinfo": "c",
+        "ngx_http.h": "c"
     },
     "favorites.resources": [
         {

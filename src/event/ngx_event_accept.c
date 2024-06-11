@@ -419,6 +419,7 @@ ngx_event_accept(ngx_event_t *ev) // 在ngx_process_events_and_timers中执行
 
         log->data = NULL;
         log->handler = NULL;
+        // TIP: 2. 调用 ls->handler(c) ? ngx_http_init_connection
 
         ls->handler(c); // ngx_http_init_connection
 

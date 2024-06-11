@@ -331,6 +331,7 @@ void ngx_process_events_and_timers(ngx_cycle_t *cycle)
                如果ngx_use_accept_mutex为0也就是未开启accept_mutex锁，则在ngx_worker_process_init->ngx_event_process_init 中把accept连接读事件统计到epoll中
                否则在ngx_process_events_and_timers->ngx_process_events_and_timers->ngx_trylock_accept_mutex中把accept连接读事件统计到epoll中
                */
+            // FFF: lock ngx_process_events_and_timers->ngx_trylock_accept_mutex，判断 ngx_use_accept_mutex 为 1，且 ngx_accept_disabled <= 0 (大于0说明可用连接用了超过八分之七,则让其他的进程在下面的else中来accept)
             if (ngx_trylock_accept_mutex(cycle) == NGX_ERROR)
             { // 不管是获取到锁还是没获取到锁都是返回NGX_OK
                 return;
@@ -390,6 +391,8 @@ void ngx_process_events_and_timers(ngx_cycle_t *cycle)
     // 释放锁后再处理下面的EPOLLIN EPOLLOUT请求
     if (ngx_accept_mutex_held)
     {
+        // FFF: lock ngx_process_events_and_timers->ngx_shmtx_unlock
+
         ngx_shmtx_unlock(&ngx_accept_mutex);
     }
 
@@ -885,6 +888,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
      负载均衡锁（既然不存在多个进程去抢一个监听端口上的连接的情况，那么自然不需要均衡多个worker进程的负载）。
          这时会将ngx_use_accept_mutex全局变量置为1，ngx_accept_mutex_held标志设为0，ngx_accept_mutex_delay则设为在配置文件中指定的最大延迟时间。
      */
+    // FFF: ngx_event_process_init 设置 ngx_use_accept_mutex
     if (ccf->master && ccf->worker_processes > 1 && ecf->accept_mutex)
     {
         ngx_use_accept_mutex = 1;
@@ -930,7 +934,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
         }
 
         module = ngx_modules[m]->ctx;
-
+        // FFF: ngx_event_process_init 调用 ngx_epoll_init
         if (module->actions.init(cycle, ngx_timer_resolution) != NGX_OK)
         { // 执行epoll module中的ngx_epoll_init
             /* fatal */
@@ -1172,6 +1176,8 @@ ngx_event_process_init(ngx_cycle_t *cycle)
         对监听端口的读事件设置处理方法
         为ngx_event_accept，也就是说，有新连接事件时将调用ngx_event_accept方法建立新连接
           */
+        // TIP: rev->handler = ngx_event_accept; rev = ls[i].connection->read;
+
         rev->handler = ngx_event_accept;
 
         /*

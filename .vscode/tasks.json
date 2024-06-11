@@ -5,14 +5,24 @@
             "label": "build",
             "type": "shell",
             "command": "make",
-            
-            "args": [
-            ],
+            "args": [],
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
             "problemMatcher": "$gcc"
-        }
+        },
+        {
+            "label": "killall",
+            "type": "shell",
+            "command": "killall nginx || true",
+            "args": [],
+        },
+        {
+            "label": "build and run",
+            "type": "shell",
+            "command": " killall nginx && make && ./objs/nginx",
+            "args": [],
+        },
     ]
 }

@@ -1703,6 +1703,8 @@ ngx_str_t  ngx_http_core_get_method = { 3, (u_char *) "GET " };
 
 //ngx_http_process_request->ngx_http_handler->ngx_http_core_run_phases
 //ngx_http_run_posted_requests->ngx_http_handler
+// TIP: a1 ngx_http_handler: 设置 r->write_event_handler = ngx_http_core_run_phases，然后调用 =  ngx_http_core_run_phases
+
 void
 ngx_http_handler(ngx_http_request_t *r) /* 执行11个阶段的指定阶段 */
 {
@@ -2075,7 +2077,7 @@ ngx_http_core_find_config_phase(ngx_http_request_t *r,
                    (clcf->noname ? "*" : (clcf->exact_match ? "=" : "")),
                    &clcf->name);
 
-    //这个很重要，更新location配置，主要是 r->content_handler = clcf->handler;设置回调从而在content_phrase阶段用这个handler。
+    //TIP: 这个很重要0，ngx_http_core_find_config_phase, 更新location配置，主要是 r->content_handler = clcf->handler;设置回调从而在content_phrase阶段用这个handler。
     ngx_http_update_location_config(r);
 
     ngx_log_debug3(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
@@ -2672,7 +2674,7 @@ ngx_http_core_content_phase(ngx_http_request_t *r,
         ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                            "content phase(content_handler): %ui (%s)", r->phase_handler, ngx_http_phase_2str(ph->phase));
         r->write_event_handler = ngx_http_request_empty_handler;
-        //上面的r->content_handler会指向ngx_http_mytest_handler处理方法。也就是说，事实上ngx_http_finalize_request决定了ngx_http_mytest_handler如何起作用。
+        //TIP: 这个很重要1，ngx_http_core_content_phase: 上面的r->content_handler会指向ngx_http_mytest_handler处理方法。也就是说，事实上ngx_http_finalize_request决定了ngx_http_mytest_handler如何起作用。
         ngx_http_finalize_request(r, r->content_handler(r));
         return NGX_OK;
     }
