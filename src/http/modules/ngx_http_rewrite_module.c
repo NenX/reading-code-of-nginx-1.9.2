@@ -1736,7 +1736,20 @@ ngx_http_rewrite_if_condition(ngx_conf_t *cf, ngx_http_rewrite_loc_conf_t *lcf)
 
     value = cf->args->elts;
     last = cf->args->nelts - 1;
+    // if ($args ~ usr1=fb) {
+    // value[0]: if
+    // value[1]: ($args 
+    // value[2]: ~ 
+    // value[3]: usr1=fb)
 
+    ngx_str_t *str = (ngx_str_t *)(cf->args->elts);
+    ngx_log_stderr(0, "<%s:%d %s>: parse if: len %d", __FILE__, __LINE__, __FUNCTION__, cf->args->nelts);
+    if (cf->args->nelts == 4)
+    {
+        ngx_log_stderr(0, "<%s:%d %s>: parse if: value0 %s, value1 %s, value2 %s, value3 %s,", __FILE__, __LINE__, __FUNCTION__,
+                       value[0].data, value[1].data, value[2].data, value[3].data);
+    }
+    
     if (value[1].len < 1 || value[1].data[0] != '(')
     {
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,

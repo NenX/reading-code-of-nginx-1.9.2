@@ -197,6 +197,7 @@ ngx_http_header_t ngx_http_headers_in[] = {
     {ngx_null_string, 0, NULL}};
 
 // 设置ngx_listening_t的handler，这个handler会在监听到客户端连接时被调用，具体就是在ngx_event_accept函数中，ngx_http_init_connection函数顾名思义，就是初始化这个新建的连接
+// TIP: 开辟ngx_http_connection_t hc 空间；设置 c->data = hc; 设置 hc->addr_conf、hc->conf_ctx；设置 rev->handler = ngx_http_wait_request_handler;
 void ngx_http_init_connection(ngx_connection_t *c)
 // 当建立连接后开辟ngx_http_connection_t结构，这里面存储该服务器端ip:port所在server{}上下文配置信息，和server_name信息等，然后让
 // ngx_connection_t->data指向该结构，这样就可以通过ngx_connection_t->data获取到服务器端的serv loc 等配置信息以及该server{}中的server_name信息
@@ -227,9 +228,9 @@ void ngx_http_init_connection(ngx_connection_t *c)
     c->data = hc;
 
     /* find the server configuration for the address:port */
-
+    //TIP:  c->listening->servers 在 ngx_http_init_listening 创建。
     port = c->listening->servers;
-
+    //TIP: port->naddrs 大于 1，说明有通配符listen，如listen: *:2234;
     if (port->naddrs > 1)
     {
 
@@ -240,6 +241,7 @@ void ngx_http_init_connection(ngx_connection_t *c)
          */
         // 说明listen ip:port存在几条没有bind选项，并且存在通配符配置，如listen *:port,那么就需要通过ngx_connection_local_sockaddr来确定
         // 究竟客户端是和那个本地ip地址建立的连接
+        // TIP: c->local_sockaddr 中的地址应该是空的，通过 getsockname 获取获取 c->fd 对应的服务端地址，并设置给 c->local_sockaddr
         if (ngx_connection_local_sockaddr(c, NULL, 0) != NGX_OK)
         { //
             ngx_http_close_connection(c);
@@ -272,12 +274,15 @@ void ngx_http_init_connection(ngx_connection_t *c)
 
         default: /* AF_INET */
             sin = (struct sockaddr_in *)c->local_sockaddr;
-
+            u_char buf[NGX_SOCKADDR_STRLEN];
             addr = port->addrs;
+            (void)ngx_sock_ntop(c->local_sockaddr, c->local_socklen, buf, NGX_SOCKADDR_STRLEN, 1);
+            printf("<%s:%d %s>: c->local_socklen %s\n", __FILE__, __LINE__, __FUNCTION__, buf);
 
             /* the last address is "*" */
             // 根据上面的ngx_connection_local_sockaddr函数获取到客户端连接到本地，本地IP地址获取到后，遍历ngx_http_port_t找到对应
             // 的IP地址和端口，然后赋值给ngx_http_connection_t->addr_conf，这里面存储有server_name配置信息以及该ip:port对应的上下文信息
+            //TIP: 前面 naddrs - 1 个 addr[i].addr 没有包含确切地址，如果匹配上就break，最后一个是通配符所以addr[i].addr为空，所以这里需要减1
             for (i = 0; i < port->naddrs - 1; i++)
             {
                 if (addr[i].addr == sin->sin_addr.s_addr)
@@ -290,6 +295,7 @@ void ngx_http_init_connection(ngx_connection_t *c)
                   这里也体现了在ngx_http_init_connection中获取http{}上下文ctx，如果客户端请求中带有host参数，则会继续在ngx_http_set_virtual_server
                   中重新获取对应的server{}和location{}，如果客户端请求不带host头部行，则使用默认的server{},见 ngx_http_init_connection
               */
+            //TIP: 通过 c->local_sockaddr 查找 c->listening->servers->addrs 对应的 ngx_http_addr_conf_t
             hc->addr_conf = &addr[i].conf;
 
             break;
@@ -317,6 +323,7 @@ void ngx_http_init_connection(ngx_connection_t *c)
 
     /* the default server configuration for the address:port */
     // listen add:port对于的 server{}配置块的上下文ctx
+    //TIP: 将 ngx_http_addr_conf_t 对应的 ngx_http_conf_ctx_t 保存到 hc->conf_ctx
     hc->conf_ctx = hc->addr_conf->default_server->ctx;
 
     ctx = ngx_palloc(c->pool, sizeof(ngx_http_log_ctx_t));
@@ -2194,6 +2201,8 @@ void ngx_http_process_request(ngx_http_request_t *r)
     从现在开始不会再需要接收HTTP请求行或者头部，所以需要重新设置当前连接读/写事件的回调方法。在这一步骤中，将同时把读事件、写事件的回调
     方法都设置为ngx_http_request_handler方法，请求的后续处理都是通过ngx_http_request_handler方法进行的。
      */
+    //TIP: ngx_http_request_handler 会调用 r->read_event_handler 或者 r->write_event_handler
+    //TIP: 在 ngx_http_handler 会设置 r->write_event_handler = ngx_http_core_run_phases;
     c->read->handler = ngx_http_request_handler;  // 由读写事件触发ngx_http_request_handler  //由epoll读事件在ngx_epoll_process_events触发
     c->write->handler = ngx_http_request_handler; // 由epoll写事件在ngx_epoll_process_events触发
 

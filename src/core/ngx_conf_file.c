@@ -4,11 +4,10 @@
  * Copyright (C) Nginx, Inc.
  */
 
-
 #include <ngx_config.h>
 #include <ngx_core.h>
 
-#define NGX_CONF_BUFFER  4096
+#define NGX_CONF_BUFFER 4096
 
 static ngx_int_t ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last);
 static ngx_int_t ngx_conf_read_token(ngx_conf_t *cf);
@@ -18,34 +17,30 @@ static void ngx_conf_flush_files(ngx_cycle_t *cycle);
 配置类型模块是唯一一种只有1个模块的模块类型。配置模块的类型叫做NGX_CONF_MODULE，它仅有的模块叫做ngx_conf_module，这是Nginx最
 底层的模块，它指导着所有模块以配置项为核心来提供功能。因此，它是其他所有模块的基础。
 */
-static ngx_command_t  ngx_conf_commands[] = { //嵌入其他配置文件
+static ngx_command_t ngx_conf_commands[] = { // 嵌入其他配置文件
 
-    { ngx_string("include"),
-      NGX_ANY_CONF|NGX_CONF_TAKE1,
-      ngx_conf_include,
-      0,
-      0,
-      NULL },
+    {ngx_string("include"),
+     NGX_ANY_CONF | NGX_CONF_TAKE1,
+     ngx_conf_include,
+     0,
+     0,
+     NULL},
 
-      ngx_null_command
-};
+    ngx_null_command};
 
-
-ngx_module_t  ngx_conf_module = {
+ngx_module_t ngx_conf_module = {
     NGX_MODULE_V1,
-    NULL,                                  /* module context */
-    ngx_conf_commands,                     /* module directives */
-    NGX_CONF_MODULE,                       /* module type */
-    NULL,                                  /* init master */
-    NULL,                                  /* init module */
-    NULL,                                  /* init process */
-    NULL,                                  /* init thread */
-    NULL,                                  /* exit thread */
-    ngx_conf_flush_files,                  /* exit process */
-    NULL,                                  /* exit master */
-    NGX_MODULE_V1_PADDING
-};
-
+    NULL,                 /* module context */
+    ngx_conf_commands,    /* module directives */
+    NGX_CONF_MODULE,      /* module type */
+    NULL,                 /* init master */
+    NULL,                 /* init module */
+    NULL,                 /* init process */
+    NULL,                 /* init thread */
+    NULL,                 /* exit thread */
+    ngx_conf_flush_files, /* exit process */
+    NULL,                 /* exit master */
+    NGX_MODULE_V1_PADDING};
 
 /* The eight fixed arguments */
 
@@ -57,21 +52,21 @@ static ngx_uint_t argument_number[] = {
     NGX_CONF_TAKE4,
     NGX_CONF_TAKE5,
     NGX_CONF_TAKE6,
-    NGX_CONF_TAKE7
-};
+    NGX_CONF_TAKE7};
 
 /* 解析命令行参数信息到内存结构中 */
 char *
 ngx_conf_param(ngx_conf_t *cf)
 {
-    char             *rv;
-    ngx_str_t        *param;
-    ngx_buf_t         b;
-    ngx_conf_file_t   conf_file;
+    char *rv;
+    ngx_str_t *param;
+    ngx_buf_t b;
+    ngx_conf_file_t conf_file;
 
     param = &cf->cycle->conf_param;
 
-    if (param->len == 0) {
+    if (param->len == 0)
+    {
         return NGX_CONF_OK;
     }
 
@@ -128,18 +123,19 @@ HTTP框架继续处理。
 /*
 它是一个间接的递归函数，也就是说虽然我们在该函数体内看不到直接的对其本身的调用，但是它执行的一些函数（比如ngx_conf_handler）内又会
 调用ngx_conf_parse函数，因此形成递归，这一般在处理一些特殊配置指令或复杂配置项，比如指令include、events、http、 server、location等的处理时。
-*/ //ngx配置解析数据结构图解参考:http://tech.uc.cn/?p=300  这个比较全
+*/
+// ngx配置解析数据结构图解参考:http://tech.uc.cn/?p=300  这个比较全
 char *
-ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)  //参考:http://blog.chinaunix.net/uid-26335251-id-3483044.html
+ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename) // 参考:http://blog.chinaunix.net/uid-26335251-id-3483044.html
 {
-    char             *rv;
-    u_char           *p;
-    off_t             size;
-    ngx_fd_t          fd;
-    ngx_int_t         rc;
-    ngx_buf_t         buf, *tbuf;
-    ngx_conf_file_t  *prev, conf_file;
-    ngx_conf_dump_t  *cd;
+    char *rv;
+    u_char *p;
+    off_t size;
+    ngx_fd_t fd;
+    ngx_int_t rc;
+    ngx_buf_t buf, *tbuf;
+    ngx_conf_file_t *prev, conf_file;
+    ngx_conf_dump_t *cd;
 
     /* ngx_conf_parse 这个函数来完成对配置文件的解析，其实这个函数不仅仅解析文件，还可以用来解析参数和块 */
     /*
@@ -147,16 +143,17 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)  //参考:http://blog.chinau
     第一种，刚开始解析一个配置文件，即此时的参数filename指向一个配置文件路径字符串，需要函数ngx_conf_parse打开该文件并获取相关
     的文件信息以便下面代码读取文件内容并进行解析，除了在上面介绍的nginx启动时开始主配置文件解析时属于这种情况，还有当遇到include
     指令时也将以这种状态调用ngx_conf_parse函数，因为include指令表示一个新的配置文件要开始解析。状态标记为type = parse_file;。
-    
+
     第二种，开始解析一个配置块，即此时配置文件已经打开并且也已经对文件部分进行了解析，当遇到复杂配置项比如events、http等时，
     这些复杂配置项的处理函数又会递归的调用ngx_conf_parse函数，此时解析的内容还是来自当前的配置文件，因此无需再次打开它，状态标记为type = parse_block;。
-    
+
     第三种，开始解析配置项，这在对用户通过命令行-g参数输入的配置信息进行解析时处于这种状态，如：
     nginx -g ‘daemon on;’
     nginx在调用ngx_conf_parse函数对配置信息’daemon on;’进行解析时就是这种状态，状态标记为type = parse_param;。
     前面说过，nginx配置是由标记组成的，在区分好了解析状态之后，接下来就要读取配置内容，而函数ngx_conf_read_token就是做这个事情的：
     */
-    enum {
+    enum
+    {
         parse_file = 0,
         parse_block,
         parse_param
@@ -167,38 +164,41 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)  //参考:http://blog.chinau
     prev = NULL;
 #endif
 
-    if (filename) {
-    ngx_log_stderr(0, "<%s:%d %s>: filename -> %s | %d",  __FILE__, __LINE__, __FUNCTION__, filename->data, sizeof(void *));
+    if (filename)
+    {
+        ngx_log_stderr(0, "<%s:%d %s>: filename -> %s | %d", __FILE__, __LINE__, __FUNCTION__, filename->data, sizeof(void *));
         /* open configuration file */
 
         fd = ngx_open_file(filename->data, NGX_FILE_RDONLY, NGX_FILE_OPEN, 0);
-        if (fd == NGX_INVALID_FILE) {
+        if (fd == NGX_INVALID_FILE)
+        {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, ngx_errno,
                                ngx_open_file_n " \"%s\" failed",
                                filename->data);
             return NGX_CONF_ERROR;
         }
 
-        
         /* 保存cf->conf_file 的上文 */
-        prev = cf->conf_file; //解析该配置文件之前的配置用prev暂存
+        prev = cf->conf_file; // 解析该配置文件之前的配置用prev暂存
 
         cf->conf_file = &conf_file;
 
-        if (ngx_fd_info(fd, &cf->conf_file->file.info) == NGX_FILE_ERROR) {
+        if (ngx_fd_info(fd, &cf->conf_file->file.info) == NGX_FILE_ERROR)
+        {
             ngx_log_error(NGX_LOG_EMERG, cf->log, ngx_errno,
                           ngx_fd_info_n " \"%s\" failed", filename->data);
         }
 
         cf->conf_file->buffer = &buf;
 
-    /*
-    函数ngx_conf_read_token对配置文件内容逐个字符扫描并解析为单个的token，当然，该函数并不会频繁的去读取配置文件，它每次从
-    文件内读取足够多的内容以填满一个大小为NGX_CONF_BUFFER的缓存区（除了最后一次，即配置文件剩余内容本来就不够了），这个缓存
-    区在函数 ngx_conf_parse内申请并保存引用到变量cf->conf_file->buffer内，函数 ngx_conf_read_token反复使用该缓存区
-    */
+        /*
+        函数ngx_conf_read_token对配置文件内容逐个字符扫描并解析为单个的token，当然，该函数并不会频繁的去读取配置文件，它每次从
+        文件内读取足够多的内容以填满一个大小为NGX_CONF_BUFFER的缓存区（除了最后一次，即配置文件剩余内容本来就不够了），这个缓存
+        区在函数 ngx_conf_parse内申请并保存引用到变量cf->conf_file->buffer内，函数 ngx_conf_read_token反复使用该缓存区
+        */
         buf.start = ngx_alloc(NGX_CONF_BUFFER, cf->log);
-        if (buf.start == NULL) {
+        if (buf.start == NULL)
+        {
             goto failed;
         }
 
@@ -220,22 +220,25 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)  //参考:http://blog.chinau
 #if (NGX_DEBUG)
             || 1
 #endif
-           )
+        )
         {
             p = ngx_pstrdup(cf->cycle->pool, filename);
-            if (p == NULL) {
+            if (p == NULL)
+            {
                 goto failed;
             }
 
             size = ngx_file_size(&cf->conf_file->file.info);
 
-            tbuf = ngx_create_temp_buf(cf->cycle->pool, (size_t) size);
-            if (tbuf == NULL) {
+            tbuf = ngx_create_temp_buf(cf->cycle->pool, (size_t)size);
+            if (tbuf == NULL)
+            {
                 goto failed;
             }
 
             cd = ngx_array_push(&cf->cycle->config_dump);
-            if (cd == NULL) {
+            if (cd == NULL)
+            {
                 goto failed;
             }
 
@@ -244,24 +247,28 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)  //参考:http://blog.chinau
             cd->buffer = tbuf;
 
             cf->conf_file->dump = tbuf;
-
-        } else {
+        }
+        else
+        {
             cf->conf_file->dump = NULL;
         }
-
-    } else if (cf->conf_file->file.fd != NGX_INVALID_FILE) {
+    }
+    else if (cf->conf_file->file.fd != NGX_INVALID_FILE)
+    {
 
         type = parse_block;
-
-    } else {
-        type = parse_param; //解析命令行参数
+    }
+    else
+    {
+        type = parse_param; // 解析命令行参数
     }
 
-    for ( ;; ) {
+    for (;;)
+    {
 
         /* 读取文件中的内容放到缓冲区中，并进行解析，把解析的结果放到了cf->args 里面， 指令的每个单词都在数组中占一个位置，比如 set debug off  ，那么数组中存三个位置。*/
-        rc = ngx_conf_read_token(cf); //读取文件
-        // ngx_str_t * str = (ngx_str_t *)(cf->args->elts); 
+        rc = ngx_conf_read_token(cf); // 读取文件
+        // ngx_str_t * str = (ngx_str_t *)(cf->args->elts);
         // ngx_log_stderr(0, "<%s:%d %s>: ngx_conf_read_token -> %s, %s", __FILE__, __LINE__, __FUNCTION__, str[0].data, str[1].data);
 
         /*
@@ -274,13 +281,16 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)  //参考:http://blog.chinau
          *    NGX_CONF_FILE_DONE    the configuration file is done
          */
 
-        if (rc == NGX_ERROR) {
+        if (rc == NGX_ERROR)
+        {
             goto done;
         }
 
-        if (rc == NGX_CONF_BLOCK_DONE) {
+        if (rc == NGX_CONF_BLOCK_DONE)
+        {
 
-            if (type != parse_block) {
+            if (type != parse_block)
+            {
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0, "unexpected \"}\"");
                 goto failed;
             }
@@ -288,9 +298,11 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)  //参考:http://blog.chinau
             goto done;
         }
 
-        if (rc == NGX_CONF_FILE_DONE) {
+        if (rc == NGX_CONF_FILE_DONE)
+        {
 
-            if (type == parse_block) {
+            if (type == parse_block)
+            {
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                    "unexpected end of file, expecting \"}\"");
                 goto failed;
@@ -299,9 +311,11 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)  //参考:http://blog.chinau
             goto done;
         }
 
-        if (rc == NGX_CONF_BLOCK_START) {
+        if (rc == NGX_CONF_BLOCK_START)
+        {
 
-            if (type == parse_param) {
+            if (type == parse_param)
+            {
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                    "block directives are not supported "
                                    "in -g option");
@@ -310,23 +324,27 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)  //参考:http://blog.chinau
         }
 
         /* rc == NGX_OK || rc == NGX_CONF_BLOCK_START */
-        if (cf->handler) {
+        if (cf->handler)
+        {
             /*
              * the custom handler, i.e., that is used in the http's
              * "types { ... }" directive
              */
 
-            if (rc == NGX_CONF_BLOCK_START) {
+            if (rc == NGX_CONF_BLOCK_START)
+            {
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0, "unexpected \"{\"");
                 goto failed;
             }
 
             rv = (*cf->handler)(cf, NULL, cf->handler_conf);
-            if (rv == NGX_CONF_OK) {
+            if (rv == NGX_CONF_OK)
+            {
                 continue;
             }
 
-            if (rv == NGX_CONF_ERROR) {
+            if (rv == NGX_CONF_ERROR)
+            {
                 goto failed;
             }
 
@@ -337,15 +355,16 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)  //参考:http://blog.chinau
 
         /*
         这个功能是在函数ngx_conf_handle中实现的，整个过程中需要遍历所有模块中的所有指令，如果找到一个，就直接调用指令的set函数，
-        完成对模块的配置信息的设置。 这里主要的过程就是判断是否是找到，需要判断下面一些条件： 
+        完成对模块的配置信息的设置。 这里主要的过程就是判断是否是找到，需要判断下面一些条件：
           a  名字一致。配置文件中指令的名字和模块指令中的名字需要一致
           b  模块类型一致。配置文件指令处理的模块类型和当前模块一致
           c  指令类型一致。 配置文件指令类型和当前模块指令一致
-          d  参数个数一致。配置文件中参数的个数和当前模块的当前指令参数一致。 
+          d  参数个数一致。配置文件中参数的个数和当前模块的当前指令参数一致。
         */
-        rc = ngx_conf_handler(cf, rc); //上面的ngx_conf_read_token返回的是解析到的一行配置，任何在ngx_modules中查找匹配该条配置的命令，执行相应的set
+        rc = ngx_conf_handler(cf, rc); // 上面的ngx_conf_read_token返回的是解析到的一行配置，任何在ngx_modules中查找匹配该条配置的命令，执行相应的set
 
-        if (rc == NGX_ERROR) {
+        if (rc == NGX_ERROR)
+        {
             goto failed;
         }
     }
@@ -356,23 +375,27 @@ failed:
 
 done:
 
-    if (filename) {
-        if (cf->conf_file->buffer->start) {
+    if (filename)
+    {
+        if (cf->conf_file->buffer->start)
+        {
             ngx_free(cf->conf_file->buffer->start);
         }
 
-        if (ngx_close_file(fd) == NGX_FILE_ERROR) {
+        if (ngx_close_file(fd) == NGX_FILE_ERROR)
+        {
             ngx_log_error(NGX_LOG_ALERT, cf->log, ngx_errno,
                           ngx_close_file_n " %s failed",
                           filename->data);
             rc = NGX_ERROR;
         }
-        
+
         /* 恢复上下文 */
         cf->conf_file = prev;
     }
 
-    if (rc == NGX_ERROR) {
+    if (rc == NGX_ERROR)
+    {
         return NGX_CONF_ERROR;
     }
 
@@ -381,21 +404,21 @@ done:
 
 /*
     这个功能是在函数ngx_conf_handle中实现的，整个过程中需要遍历所有模块中的所有指令，如果找到一个，就直接调用指令的set 函数，
-    完成对模块的配置信息的设置。 这里主要的过程就是判断是否是找到，需要判断下面一些条件： 
+    完成对模块的配置信息的设置。 这里主要的过程就是判断是否是找到，需要判断下面一些条件：
 
   a  名字一致。配置文件中指令的名字和模块指令中的名字需要一致
   b  模块类型一致。配置文件指令处理的模块类型和当前模块一致
   c  指令类型一致。 配置文件指令类型和当前模块指令一致
-  d  参数个数一致。配置文件中参数的个数和当前模块的当前指令参数一致。 
+  d  参数个数一致。配置文件中参数的个数和当前模块的当前指令参数一致。
 */
 static ngx_int_t
 ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
 {
-    char           *rv;
-    void           *conf, **confp;
-    ngx_uint_t      i, found;
-    ngx_str_t      *name;
-    ngx_command_t  *cmd;
+    char *rv;
+    void *conf, **confp;
+    ngx_uint_t i, found;
+    ngx_str_t *name;
+    ngx_command_t *cmd;
 
     name = cf->args->elts;
 
@@ -404,57 +427,65 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
     char tmp[256];
     memset(buf, 0, sizeof(buf));
     ngx_log_stderr(0, "<%s:%d %s>: ngx_conf_handler -> %s, %s", __FILE__, __LINE__, __FUNCTION__, name[0].data, name[1].data);
-   
-   for(ia = 0; ia < cf->args->nelts; ia++) {
+
+    for (ia = 0; ia < cf->args->nelts; ia++)
+    {
         memset(tmp, 0, sizeof(tmp));
         snprintf(tmp, sizeof(tmp), "%s ", name[ia].data);
         strcat(buf, tmp);
     }
-    //printf("yang test:%p %s <%s, %u>\n", cf->ctx, buf, __FUNCTION__, __LINE__); //这个打印出来的内容为整行的内容，如yang test:error_log logs/error.log debug   <ngx_conf_handler, 407>
-   
+    // printf("yang test:%p %s <%s, %u>\n", cf->ctx, buf, __FUNCTION__, __LINE__); //这个打印出来的内容为整行的内容，如yang test:error_log logs/error.log debug   <ngx_conf_handler, 407>
+
     int found_mytest1 = ngx_strcmp("location", name->data);
-   
+
     found = 0;
 
-    for (i = 0; ngx_modules[i]; i++) { //所有模块都扫描一遍
+    for (i = 0; ngx_modules[i]; i++)
+    { // 所有模块都扫描一遍
         cmd = ngx_modules[i]->commands;
-        if (cmd == NULL) {
+        if (cmd == NULL)
+        {
             continue;
         }
-       
-        for ( /* void */ ; cmd->name.len; cmd++) {
 
-            if (name->len != cmd->name.len) {
+        for (/* void */; cmd->name.len; cmd++)
+        {
+
+            if (name->len != cmd->name.len)
+            {
                 continue;
             }
 
-            if (ngx_strcmp(name->data, cmd->name.data) != 0) {
+            if (ngx_strcmp(name->data, cmd->name.data) != 0)
+            {
                 continue;
             }
             int found_mytest2 = ngx_strcmp("location", cmd->name.data);
 
             found = 1;
 
-            if (ngx_modules[i]->type != NGX_CONF_MODULE
-                && ngx_modules[i]->type != cf->module_type)
+            if (ngx_modules[i]->type != NGX_CONF_MODULE && ngx_modules[i]->type != cf->module_type)
             {
                 continue;
             }
 
             /* is the directive's location right ? */
 
-            if (!(cmd->type & cf->cmd_type)) {
+            if (!(cmd->type & cf->cmd_type))
+            {
                 continue;
             }
 
-            if (!(cmd->type & NGX_CONF_BLOCK) && last != NGX_OK) {
+            if (!(cmd->type & NGX_CONF_BLOCK) && last != NGX_OK)
+            {
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                                  "directive \"%s\" is not terminated by \";\"",
-                                  name->data);
+                                   "directive \"%s\" is not terminated by \";\"",
+                                   name->data);
                 return NGX_ERROR;
             }
 
-            if ((cmd->type & NGX_CONF_BLOCK) && last != NGX_CONF_BLOCK_START) {
+            if ((cmd->type & NGX_CONF_BLOCK) && last != NGX_CONF_BLOCK_START)
+            {
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                    "directive \"%s\" has no opening \"{\"",
                                    name->data);
@@ -463,31 +494,39 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
 
             /* is the directive's argument count right ? */
 
-            if (!(cmd->type & NGX_CONF_ANY)) {
+            if (!(cmd->type & NGX_CONF_ANY))
+            {
 
-                if (cmd->type & NGX_CONF_FLAG) {
+                if (cmd->type & NGX_CONF_FLAG)
+                {
 
-                    if (cf->args->nelts != 2) {
+                    if (cf->args->nelts != 2)
+                    {
                         goto invalid;
                     }
+                }
+                else if (cmd->type & NGX_CONF_1MORE)
+                {
 
-                } else if (cmd->type & NGX_CONF_1MORE) {
-
-                    if (cf->args->nelts < 2) {
+                    if (cf->args->nelts < 2)
+                    {
                         goto invalid;
                     }
+                }
+                else if (cmd->type & NGX_CONF_2MORE)
+                {
 
-                } else if (cmd->type & NGX_CONF_2MORE) {
-
-                    if (cf->args->nelts < 3) {
+                    if (cf->args->nelts < 3)
+                    {
                         goto invalid;
                     }
-
-                } else if (cf->args->nelts > NGX_CONF_MAX_ARGS) {
+                }
+                else if (cf->args->nelts > NGX_CONF_MAX_ARGS)
+                {
 
                     goto invalid;
-
-                } else if (!(cmd->type & argument_number[cf->args->nelts - 1]))
+                }
+                else if (!(cmd->type & argument_number[cf->args->nelts - 1]))
                 {
                     goto invalid;
                 }
@@ -505,39 +544,79 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
             第二个if中执行的命令主要有(NGX_MAIN_CONF):http   events include等
             第三个if中执行的命令主要有(其他):http{}   events{} server server{} location及其location{}内部的命令
             */
-            
-            //conf为开辟的main_conf  srv_conf loc_conf空间指针，真正的空间为各个模块module的ctx成员中,
-            //可以参考ngx_http_mytest_config_module_ctx, http{}对应的空间开辟在ngx_http_block
-            //注意:通过在ngx_init_cycle中打印conf.ctx以及在这里打印cf->cxt，发现所有第一层(http{}外的配置，包括http这一行)的地址是一样的，也就是这里的conf.ctx始终等于cycle->conf_ctx;
-            //每到一层新的{}，cf->cxt地址就会指向这一层中对应的ngx_http_conf_ctx_t。退出{}中后，会把cf->cxt恢复到上层的ngx_http_conf_ctx_t地址
-            //这时的cf->ctx一定等于ngx_cycle_s->conf_ctx，见ngx_init_cycle
-            if (cmd->type & NGX_DIRECT_CONF) {//使用全局配置，主要包括以下命令//ngx_core_commands  ngx_openssl_commands  ngx_google_perftools_commands   ngx_regex_commands  ngx_thread_pool_commands
-                conf = ((void **) cf->ctx)[ngx_modules[i]->index]; //ngx_core_commands对应的空间分配的地方参考ngx_core_module->ngx_core_module_ctx
-            } else if (cmd->type & NGX_MAIN_CONF) { //例如ngx_http_commands ngx_errlog_commands  ngx_events_commands  ngx_conf_commands  这些配置command一般只有一个参数
-                conf = &(((void **) cf->ctx)[ngx_modules[i]->index]); //指向ngx_cycle_s->conf_ctx
-            } else if (cf->ctx) {
-     /*http{}内部行相关命令可以参考:ngx_http_core_commands,通过这些命令里面的NGX_HTTP_MAIN_CONF_OFFSET NGX_HTTP_SRV_CONF_OFFSET NGX_HTTP_LOC_CONF_OFFSET
-     可以确定出该命令行的地址对应在ngx_http_conf_ctx_t中的地址空间头部指针位置, 就是确定出该命令为ngx_http_conf_ctx的成员main srv loc中的那一个
-     */      
-                confp = *(void **) ((char *) cf->ctx + cmd->conf);   //如果是http{}内部的行，则cf->ctx已经在ngx_http_block中被重新赋值为新的ngx_http_conf_ctx_t空间
-                //这里的cf->ctx为二级或者三级里面分配的空间了，而不是ngx_cycle_s->conf_ctx,例如为存储http{}内部配置项的空间，见ngx_http_block分配的空间
 
-                if (confp) { //图形化参考:深入理解NGINX中的图9-2  图10-1  图4-2，结合图看,并可以配合http://tech.uc.cn/?p=300看
-                    conf = confp[ngx_modules[i]->ctx_index]; //上一行是确定在ngx_http_conf_ctx_t中main srv loc中的那个成员头，这个则是对应头部下面的数组指针中的具体那一个
+            // conf为开辟的main_conf  srv_conf loc_conf空间指针，真正的空间为各个模块module的ctx成员中,
+            // 可以参考ngx_http_mytest_config_module_ctx, http{}对应的空间开辟在ngx_http_block
+            // 注意:通过在ngx_init_cycle中打印conf.ctx以及在这里打印cf->cxt，发现所有第一层(http{}外的配置，包括http这一行)的地址是一样的，也就是这里的conf.ctx始终等于cycle->conf_ctx;
+            // 每到一层新的{}，cf->cxt地址就会指向这一层中对应的ngx_http_conf_ctx_t。退出{}中后，会把cf->cxt恢复到上层的ngx_http_conf_ctx_t地址
+            // 这时的cf->ctx一定等于ngx_cycle_s->conf_ctx，见ngx_init_cycle
+            if (cmd->type & NGX_DIRECT_CONF)
+            {                                                     // 使用全局配置，主要包括以下命令//ngx_core_commands  ngx_openssl_commands  ngx_google_perftools_commands   ngx_regex_commands  ngx_thread_pool_commands
+                conf = ((void **)cf->ctx)[ngx_modules[i]->index]; // ngx_core_commands对应的空间分配的地方参考ngx_core_module->ngx_core_module_ctx
+            }
+            else if (cmd->type & NGX_MAIN_CONF)
+            {                                                        // 例如ngx_http_commands ngx_errlog_commands  ngx_events_commands  ngx_conf_commands  这些配置command一般只有一个参数
+                conf = &(((void **)cf->ctx)[ngx_modules[i]->index]); // 指向ngx_cycle_s->conf_ctx
+            }
+            else if (cf->ctx)
+            {
+                /*http{}内部行相关命令可以参考:ngx_http_core_commands,通过这些命令里面的NGX_HTTP_MAIN_CONF_OFFSET NGX_HTTP_SRV_CONF_OFFSET NGX_HTTP_LOC_CONF_OFFSET
+                可以确定出该命令行的地址对应在ngx_http_conf_ctx_t中的地址空间头部指针位置, 就是确定出该命令为ngx_http_conf_ctx的成员main srv loc中的那一个
+                */
+                confp = *(void **)((char *)cf->ctx + cmd->conf); // 如果是http{}内部的行，则cf->ctx已经在ngx_http_block中被重新赋值为新的ngx_http_conf_ctx_t空间
+                // 这里的cf->ctx为二级或者三级里面分配的空间了，而不是ngx_cycle_s->conf_ctx,例如为存储http{}内部配置项的空间，见ngx_http_block分配的空间
+
+                if (confp)
+                {                                            // 图形化参考:深入理解NGINX中的图9-2  图10-1  图4-2，结合图看,并可以配合http://tech.uc.cn/?p=300看
+                    conf = confp[ngx_modules[i]->ctx_index]; // 上一行是确定在ngx_http_conf_ctx_t中main srv loc中的那个成员头，这个则是对应头部下面的数组指针中的具体那一个
                     ngx_log_stderr(0, "<%s:%d %s>: confp -> %p, conf -> %p", __FILE__, __LINE__, __FUNCTION__, confp, conf);
                 }
             }
-            ngx_str_t * str = (ngx_str_t *)(cf->args->elts); 
-            ngx_log_stderr(0, "<%s:%d %s>: cmd set ->%s, %s === %s", __FILE__, __LINE__, __FUNCTION__, str[0].data, str[1].data, cmd->name.data);
-
+            ngx_str_t *str = (ngx_str_t *)(cf->args->elts);
+            if (cf->args->nelts == 1)
+            {
+                ngx_log_stderr(0, "<%s:%d %s>: cmd set --> cf->args->elts[0]:%s,  cmd->name:%s",
+                               __FILE__, __LINE__, __FUNCTION__,
+                               str[0].data,
+                               cmd->name.data);
+            }
+            else if (cf->args->nelts == 2)
+            {
+                ngx_log_stderr(0, "<%s:%d %s>: cmd set --> cf->args->elts[0]:%s, [1]:%s, cmd->name:%s",
+                               __FILE__, __LINE__, __FUNCTION__,
+                               str[0].data,
+                               str[1].data,
+                               cmd->name.data);
+            }
+            else if (cf->args->nelts == 3)
+            {
+                ngx_log_stderr(0, "<%s:%d %s>: cmd set --> cf->args->elts[0]:%s, [1]:%s, [2]:%s, cmd->name:%s",
+                               __FILE__, __LINE__, __FUNCTION__,
+                               str[0].data,
+                               str[1].data,
+                               str[2].data,
+                               cmd->name.data);
+            }
+            else if (cf->args->nelts == 4)
+            {
+                ngx_log_stderr(0, "<%s:%d %s>: cmd set --> cf->args->elts[0]:%s, [1]:%s, [2]:%s, [3]:%s, cmd->name:%s",
+                               __FILE__, __LINE__, __FUNCTION__,
+                               str[0].data,
+                               str[1].data,
+                               str[2].data,
+                               str[3].data,
+                               cmd->name.data);
+            }
             /* 例如解析到http {，则执行ngx_http_block，在该函数中会把http模块对应的srv local main配置空间赋值给conf,也就是ngx_cycle_s->conf_ctx[]对应的模块 */
-            rv = cmd->set(cf, cmd, conf); 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
-            if (rv == NGX_CONF_OK) {
+            rv = cmd->set(cf, cmd, conf);
+
+            if (rv == NGX_CONF_OK)
+            {
                 return NGX_OK;
             }
 
-            if (rv == NGX_CONF_ERROR) {
+            if (rv == NGX_CONF_ERROR)
+            {
                 return NGX_ERROR;
             }
 
@@ -548,7 +627,8 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
         }
     }
 
-    if (found) {
+    if (found)
+    {
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                            "\"%s\" directive is not allowed here", name->data);
 
@@ -584,44 +664,43 @@ rv = cmd->set(cf, cmd, conf);
 */
 
 /*
- 首先明确,什么是一个token: 
- token是处在两个相邻空格,换行符,双引号,单引号等之间的字符串. 
-*/  
+ 首先明确,什么是一个token:
+ token是处在两个相邻空格,换行符,双引号,单引号等之间的字符串.
+*/
 
-/****************************************** 
-1.读取文件内容,每次读取一个buf大小(4K),如果文件内容不足4K则全部读取到buf中. 
-2.扫描buf中的内容,每次扫描一个token就会存入cf->args中,然后返回. 
-3.返回后调用ngx_conf_parse函数会调用*cf->handler和ngx_conf_handler(cf, rc)函数处理. 
-3.如果是复杂配置项,会调用上次执行的状态继续解析配置文件. 
-.*****************************************/ 
+/******************************************
+1.读取文件内容,每次读取一个buf大小(4K),如果文件内容不足4K则全部读取到buf中.
+2.扫描buf中的内容,每次扫描一个token就会存入cf->args中,然后返回.
+3.返回后调用ngx_conf_parse函数会调用*cf->handler和ngx_conf_handler(cf, rc)函数处理.
+3.如果是复杂配置项,会调用上次执行的状态继续解析配置文件.
+.*****************************************/
 
 static ngx_int_t
-ngx_conf_read_token(ngx_conf_t *cf)//参考http://blog.chinaunix.net/uid-26335251-id-3483044.html
+ngx_conf_read_token(ngx_conf_t *cf) // 参考http://blog.chinaunix.net/uid-26335251-id-3483044.html
 {
-    u_char      *start, ch, *src, *dst;
-    off_t        file_size;
-    size_t       len;
-    ssize_t      n, size;
-    ngx_uint_t   found, need_space, last_space, sharp_comment, variable;
-    ngx_uint_t   quoted, s_quoted, d_quoted, start_line;
-    ngx_str_t   *word;
-    ngx_buf_t   *b, *dump; //b为在函数外层开辟的4096字节的存储file文件内容的空间，dump为当解析到尾部的时候不足以构成一个token的时候，零时把这部分内存存起来
+    u_char *start, ch, *src, *dst;
+    off_t file_size;
+    size_t len;
+    ssize_t n, size;
+    ngx_uint_t found, need_space, last_space, sharp_comment, variable;
+    ngx_uint_t quoted, s_quoted, d_quoted, start_line;
+    ngx_str_t *word;
+    ngx_buf_t *b, *dump; // b为在函数外层开辟的4096字节的存储file文件内容的空间，dump为当解析到尾部的时候不足以构成一个token的时候，零时把这部分内存存起来
 
-    found = 0;//标志位,表示找到一个token 
+    found = 0; // 标志位,表示找到一个token
 
-    
-    /************************* 
-    标志位,表示此时需要一个token分隔符,即token前面的分隔符 
-    一般刚刚解析完一对双引号或者单引号,此时设置need_space为1, 
-    表示期待下一个字符为分隔符 
-    **********************/  
+    /*************************
+    标志位,表示此时需要一个token分隔符,即token前面的分隔符
+    一般刚刚解析完一对双引号或者单引号,此时设置need_space为1,
+    表示期待下一个字符为分隔符
+    **********************/
     need_space = 0;
-    last_space = 1; //标志位,表示上一个字符为token分隔符   
-    sharp_comment = 0; //注释(#)   
-    variable = 0; //遇到字符$后,表示一个变量   
-    quoted = 0; //标志位,表示上一个字符为反引号   
-    s_quoted = 0; //标志位,表示已扫描一个双引号,期待另一个双引号   
-    d_quoted = 0; //标志位,表示已扫描一个单引号,期待另一个单引号  
+    last_space = 1;    // 标志位,表示上一个字符为token分隔符
+    sharp_comment = 0; // 注释(#)
+    variable = 0;      // 遇到字符$后,表示一个变量
+    quoted = 0;        // 标志位,表示上一个字符为反引号
+    s_quoted = 0;      // 标志位,表示已扫描一个双引号,期待另一个双引号
+    d_quoted = 0;      // 标志位,表示已扫描一个单引号,期待另一个单引号
 
     cf->args->nelts = 0;
     b = cf->conf_file->buffer;
@@ -631,15 +710,20 @@ ngx_conf_read_token(ngx_conf_t *cf)//参考http://blog.chinaunix.net/uid-2633525
 
     file_size = ngx_file_size(&cf->conf_file->file.info);
 
-    for ( ;; ) {
+    for (;;)
+    {
 
-        if (b->pos >= b->last) { //当buf内的数据全部扫描后   
+        if (b->pos >= b->last)
+        { // 当buf内的数据全部扫描后
 
-            if (cf->conf_file->file.offset >= file_size) {
+            if (cf->conf_file->file.offset >= file_size)
+            {
 
-                if (cf->args->nelts > 0 || !last_space) {
+                if (cf->args->nelts > 0 || !last_space)
+                {
 
-                    if (cf->conf_file->file.fd == NGX_INVALID_FILE) {
+                    if (cf->conf_file->file.fd == NGX_INVALID_FILE)
+                    {
                         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                            "unexpected end of parameter, "
                                            "expecting \";\"");
@@ -647,156 +731,181 @@ ngx_conf_read_token(ngx_conf_t *cf)//参考http://blog.chinaunix.net/uid-2633525
                     }
 
                     ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                                  "unexpected end of file, "
-                                  "expecting \";\" or \"}\"");
+                                       "unexpected end of file, "
+                                       "expecting \";\" or \"}\"");
                     return NGX_ERROR;
                 }
 
-                //配置文件读取完毕. 
+                // 配置文件读取完毕.
                 return NGX_CONF_FILE_DONE;
             }
 
-            //已扫描的buf的长度   
-            len = b->pos - start; //表示上一个4096的buffer中未解析完毕的空间大小
+            // 已扫描的buf的长度
+            len = b->pos - start; // 表示上一个4096的buffer中未解析完毕的空间大小
 
-            if (len == NGX_CONF_BUFFER) {//已扫描全部buf   
+            if (len == NGX_CONF_BUFFER)
+            { // 已扫描全部buf
                 cf->conf_file->line = start_line;
 
-                if (d_quoted) { //缺少右双引号   
+                if (d_quoted)
+                { // 缺少右双引号
                     ch = '"';
-
-                } else if (s_quoted) { //缺少右单引号   
+                }
+                else if (s_quoted)
+                { // 缺少右单引号
                     ch = '\'';
-
-                } else { //字符串太长,一个buf都无法存储一个token   
+                }
+                else
+                { // 字符串太长,一个buf都无法存储一个token
                     ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                        "too long parameter \"%*s...\" started",
                                        10, start);
                     return NGX_ERROR;
                 }
 
-                
-                //参数太多,可能缺少右双引号或者右单引号.   
+                // 参数太多,可能缺少右双引号或者右单引号.
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                    "too long parameter, probably "
-                                   "missing terminating \"%c\" character", ch);
+                                   "missing terminating \"%c\" character",
+                                   ch);
                 return NGX_ERROR;
             }
 
-            if (len) {//长度有效,赋值已扫描buf到buf首部  
+            if (len)
+            { // 长度有效,赋值已扫描buf到buf首部
                 ngx_memmove(b->start, start, len);
             }
 
-            //size等于配置文件未读入的长度    
-            size = (ssize_t) (file_size - cf->conf_file->file.offset);
+            // size等于配置文件未读入的长度
+            size = (ssize_t)(file_size - cf->conf_file->file.offset);
 
-            //size不能大于可用buf长度，因为上一个4096空间可能有部分空间需要在这一个4096空间中用
-            if (size > b->end - (b->start + len)) {
+            // size不能大于可用buf长度，因为上一个4096空间可能有部分空间需要在这一个4096空间中用
+            if (size > b->end - (b->start + len))
+            {
                 size = b->end - (b->start + len);
             }
 
             n = ngx_read_file(&cf->conf_file->file, b->start + len, size,
                               cf->conf_file->file.offset);
 
-            if (n == NGX_ERROR) {
+            if (n == NGX_ERROR)
+            {
                 return NGX_ERROR;
             }
 
-            if (n != size) {
+            if (n != size)
+            {
                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                    ngx_read_file_n " returned "
-                                   "only %z bytes instead of %z",
+                                                   "only %z bytes instead of %z",
                                    n, size);
                 return NGX_ERROR;
             }
 
-            //重置pos,last,start   //参考http://blog.chinaunix.net/uid-26335251-id-3483044.html
-            b->pos = b->start + len;//指向新读取空间的头，这里的len为上一个4096中末尾空间为满足一个stoken部分的空间大小
-            b->last = b->pos + n;//指向新读取空间的尾
+            // 重置pos,last,start   //参考http://blog.chinaunix.net/uid-26335251-id-3483044.html
+            b->pos = b->start + len; // 指向新读取空间的头，这里的len为上一个4096中末尾空间为满足一个stoken部分的空间大小
+            b->last = b->pos + n;    // 指向新读取空间的尾
             start = b->start;
 
-            if (dump) {
+            if (dump)
+            {
                 dump->last = ngx_cpymem(dump->last, b->pos, size);
             }
         }
 
         ch = *b->pos++;
 
-        if (ch == LF) {//遇到换行符 
+        if (ch == LF)
+        { // 遇到换行符
             cf->conf_file->line++;
 
-            /* 如果该行为注释,则注释行结束,即取消注释标识 
-                */
-            if (sharp_comment) {
+            /* 如果该行为注释,则注释行结束,即取消注释标识
+             */
+            if (sharp_comment)
+            {
                 sharp_comment = 0;
             }
         }
 
-        if (sharp_comment) {//如果该行为注释行,则不再对字符判断,继续读取字符执行   
+        if (sharp_comment)
+        { // 如果该行为注释行,则不再对字符判断,继续读取字符执行
             continue;
         }
 
         /*
-        如果为反引号,则设置反引号标识,并且不对该字符进行解析   
-        继续扫描下一个字符   
+        如果为反引号,则设置反引号标识,并且不对该字符进行解析
+        继续扫描下一个字符
         */
-        if (quoted) {
+        if (quoted)
+        {
             quoted = 0;
             continue;
         }
 
-        if (need_space) { //上一个字符为单引号或者双引号,期待一个分隔符   
-            if (ch == ' ' || ch == '\t' || ch == CR || ch == LF) {
+        if (need_space)
+        { // 上一个字符为单引号或者双引号,期待一个分隔符
+            if (ch == ' ' || ch == '\t' || ch == CR || ch == LF)
+            {
                 last_space = 1;
                 need_space = 0;
                 continue;
             }
 
-            if (ch == ';') {  //遇到分号,表示一个简单配置项解析结束.  
+            if (ch == ';')
+            { // 遇到分号,表示一个简单配置项解析结束.
                 return NGX_OK;
             }
 
-            if (ch == '{') { //遇到{表示一个复杂配置项开始   
+            if (ch == '{')
+            { // 遇到{表示一个复杂配置项开始
                 return NGX_CONF_BLOCK_START;
             }
 
-            if (ch == ')') {
+            if (ch == ')')
+            {
                 last_space = 1;
                 need_space = 0;
-
-            } else {
-                 ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                                    "unexpected \"%c\"", ch);
-                 return NGX_ERROR;
+            }
+            else
+            {
+                ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                                   "unexpected \"%c\"", ch);
+                return NGX_ERROR;
             }
         }
 
-        if (last_space) {//如果上一个字符是空格,换行符等分割token的字符(间隔符).  
-            if (ch == ' ' || ch == '\t' || ch == CR || ch == LF) {//两个分割token的字符相邻,依旧表示一个间隔符.   
+        if (last_space)
+        { // 如果上一个字符是空格,换行符等分割token的字符(间隔符).
+            if (ch == ' ' || ch == '\t' || ch == CR || ch == LF)
+            { // 两个分割token的字符相邻,依旧表示一个间隔符.
                 continue;
             }
 
             start = b->pos - 1;
             start_line = cf->conf_file->line;
 
-            switch (ch) {
+            switch (ch)
+            {
 
             case ';':
             case '{':
-                if (cf->args->nelts == 0) {
+                if (cf->args->nelts == 0)
+                {
                     ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                        "unexpected \"%c\"", ch);
                     return NGX_ERROR;
                 }
 
-                if (ch == '{') {
+                if (ch == '{')
+                {
                     return NGX_CONF_BLOCK_START;
                 }
 
                 return NGX_OK;
 
             case '}':
-                if (cf->args->nelts != 0) {
+                if (cf->args->nelts != 0)
+                {
                     ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                                        "unexpected \"}\"");
                     return NGX_ERROR;
@@ -828,53 +937,63 @@ ngx_conf_read_token(ngx_conf_t *cf)//参考http://blog.chinaunix.net/uid-2633525
             default:
                 last_space = 0;
             }
-
-        } else {
-            if (ch == '{' && variable) {
+        }
+        else
+        {
+            if (ch == '{' && variable)
+            {
                 continue;
             }
 
             variable = 0;
 
-            if (ch == '\\') {
+            if (ch == '\\')
+            {
                 quoted = 1;
                 continue;
             }
 
-            if (ch == '$') { //变量标志位为1   
+            if (ch == '$')
+            { // 变量标志位为1
                 variable = 1;
                 continue;
             }
 
-            if (d_quoted) {
-                if (ch == '"') {  //已经找到成对双引号,期望一个间隔符   
+            if (d_quoted)
+            {
+                if (ch == '"')
+                { // 已经找到成对双引号,期望一个间隔符
                     d_quoted = 0;
                     need_space = 1;
                     found = 1;
                 }
-
-            } else if (s_quoted) {//已经找到成对单引号,期望一个间隔符   
-                if (ch == '\'') {
+            }
+            else if (s_quoted)
+            { // 已经找到成对单引号,期望一个间隔符
+                if (ch == '\'')
+                {
                     s_quoted = 0;
                     need_space = 1;
                     found = 1;
                 }
-
-            } else if (ch == ' ' || ch == '\t' || ch == CR || ch == LF
-                       || ch == ';' || ch == '{')
+            }
+            else if (ch == ' ' || ch == '\t' || ch == CR || ch == LF || ch == ';' || ch == '{')
             {
                 last_space = 1;
                 found = 1;
             }
 
-            if (found) {
+            if (found)
+            {
                 word = ngx_array_push(cf->args);
-                if (word == NULL) {
+                if (word == NULL)
+                {
                     return NGX_ERROR;
                 }
 
                 word->data = ngx_pnalloc(cf->pool, b->pos - 1 - start + 1);
-                if (word->data == NULL) {
+                if (word->data == NULL)
+                {
                     return NGX_ERROR;
                 }
 
@@ -882,8 +1001,10 @@ ngx_conf_read_token(ngx_conf_t *cf)//参考http://blog.chinaunix.net/uid-2633525
                      src < b->pos - 1;
                      len++)
                 {
-                    if (*src == '\\') { //遇到反斜杠(转意字符)   
-                        switch (src[1]) {
+                    if (*src == '\\')
+                    { // 遇到反斜杠(转意字符)
+                        switch (src[1])
+                        {
                         case '"':
                         case '\'':
                         case '\\':
@@ -905,7 +1026,6 @@ ngx_conf_read_token(ngx_conf_t *cf)//参考http://blog.chinaunix.net/uid-2633525
                             src += 2;
                             continue;
                         }
-
                     }
                     *dst++ = *src++;
                 }
@@ -913,11 +1033,13 @@ ngx_conf_read_token(ngx_conf_t *cf)//参考http://blog.chinaunix.net/uid-2633525
                 word->len = len;
                 // ngx_log_stderr(0, "<%s:%d %s>: word -> %s",  __FILE__, __LINE__, __FUNCTION__, word->data);
 
-                if (ch == ';') {//遇到分号,表示一个简单配置项解析结束.   
+                if (ch == ';')
+                { // 遇到分号,表示一个简单配置项解析结束.
                     return NGX_OK;
                 }
 
-                if (ch == '{') {
+                if (ch == '{')
+                {
                     return NGX_CONF_BLOCK_START;
                 }
 
@@ -927,25 +1049,26 @@ ngx_conf_read_token(ngx_conf_t *cf)//参考http://blog.chinaunix.net/uid-2633525
     }
 }
 
-
 char *
 ngx_conf_include(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
-    char        *rv;
-    ngx_int_t    n;
-    ngx_str_t   *value, file, name;
-    ngx_glob_t   gl;
+    char *rv;
+    ngx_int_t n;
+    ngx_str_t *value, file, name;
+    ngx_glob_t gl;
 
     value = cf->args->elts;
     file = value[1];
 
     ngx_log_debug1(NGX_LOG_DEBUG_CORE, cf->log, 0, "include %s", file.data);
 
-    if (ngx_conf_full_name(cf->cycle, &file, 1) != NGX_OK) {
+    if (ngx_conf_full_name(cf->cycle, &file, 1) != NGX_OK)
+    {
         return NGX_CONF_ERROR;
     }
 
-    if (strpbrk((char *) file.data, "*?[") == NULL) {
+    if (strpbrk((char *)file.data, "*?[") == NULL)
+    {
 
         ngx_log_debug1(NGX_LOG_DEBUG_CORE, cf->log, 0, "include %s", file.data);
 
@@ -958,7 +1081,8 @@ ngx_conf_include(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     gl.log = cf->log;
     gl.test = 1;
 
-    if (ngx_open_glob(&gl) != NGX_OK) {
+    if (ngx_open_glob(&gl) != NGX_OK)
+    {
         ngx_conf_log_error(NGX_LOG_EMERG, cf, ngx_errno,
                            ngx_open_glob_n " \"%s\" failed", file.data);
         return NGX_CONF_ERROR;
@@ -966,16 +1090,19 @@ ngx_conf_include(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     rv = NGX_CONF_OK;
 
-    for ( ;; ) {
+    for (;;)
+    {
         n = ngx_read_glob(&gl, &name);
 
-        if (n != NGX_OK) {
+        if (n != NGX_OK)
+        {
             break;
         }
 
         file.len = name.len++;
         file.data = ngx_pstrdup(cf->pool, &name);
-        if (file.data == NULL) {
+        if (file.data == NULL)
+        {
             return NGX_CONF_ERROR;
         }
 
@@ -983,7 +1110,8 @@ ngx_conf_include(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
         rv = ngx_conf_parse(cf, &file);
 
-        if (rv != NGX_CONF_OK) {
+        if (rv != NGX_CONF_OK)
+        {
             break;
         }
     }
@@ -993,44 +1121,49 @@ ngx_conf_include(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return rv;
 }
 
-//获取配置文件全面，包括路径，存放到cycle->conf_prefix或者cycle->prefix中
+// 获取配置文件全面，包括路径，存放到cycle->conf_prefix或者cycle->prefix中
 ngx_int_t
 ngx_conf_full_name(ngx_cycle_t *cycle, ngx_str_t *name, ngx_uint_t conf_prefix)
 {
-    ngx_str_t  *prefix;
+    ngx_str_t *prefix;
 
     prefix = conf_prefix ? &cycle->conf_prefix : &cycle->prefix;
 
     return ngx_get_full_name(cycle->pool, prefix, name);
 }
 
-//查找cycle->open_files链表中的所有文件名，看是否有name文件名存在，如果存在直接返回该文件名对应的项，否则从链表数组中从新获取一个file,把name文件加入到其中
+// 查找cycle->open_files链表中的所有文件名，看是否有name文件名存在，如果存在直接返回该文件名对应的项，否则从链表数组中从新获取一个file,把name文件加入到其中
 ngx_open_file_t *
-ngx_conf_open_file(ngx_cycle_t *cycle, ngx_str_t *name) //access_log error_log配置都在这里创建ngx_open_file_t数组结构，由数组cycle->open_files统一管理
+ngx_conf_open_file(ngx_cycle_t *cycle, ngx_str_t *name) // access_log error_log配置都在这里创建ngx_open_file_t数组结构，由数组cycle->open_files统一管理
 {
-    ngx_str_t         full;
-    ngx_uint_t        i;
-    ngx_list_part_t  *part;
-    ngx_open_file_t  *file;
+    ngx_str_t full;
+    ngx_uint_t i;
+    ngx_list_part_t *part;
+    ngx_open_file_t *file;
 
 #if (NGX_SUPPRESS_WARN)
     ngx_str_null(&full);
 #endif
 
-    if (name->len) {
+    if (name->len)
+    {
         full = *name;
 
-        if (ngx_conf_full_name(cycle, &full, 0) != NGX_OK) {
+        if (ngx_conf_full_name(cycle, &full, 0) != NGX_OK)
+        {
             return NULL;
         }
 
         part = &cycle->open_files.part;
         file = part->elts;
 
-        for (i = 0; /* void */ ; i++) {
+        for (i = 0; /* void */; i++)
+        {
 
-            if (i >= part->nelts) {
-                if (part->next == NULL) {
+            if (i >= part->nelts)
+            {
+                if (part->next == NULL)
+                {
                     break;
                 }
                 part = part->next;
@@ -1038,26 +1171,31 @@ ngx_conf_open_file(ngx_cycle_t *cycle, ngx_str_t *name) //access_log error_log�
                 i = 0;
             }
 
-            if (full.len != file[i].name.len) {
+            if (full.len != file[i].name.len)
+            {
                 continue;
             }
 
-            if (ngx_strcmp(full.data, file[i].name.data) == 0) {
+            if (ngx_strcmp(full.data, file[i].name.data) == 0)
+            {
                 return &file[i];
             }
         }
     }
 
     file = ngx_list_push(&cycle->open_files);
-    if (file == NULL) {
+    if (file == NULL)
+    {
         return NULL;
     }
 
-    if (name->len) {
+    if (name->len)
+    {
         file->fd = NGX_INVALID_FILE;
         file->name = full;
-
-    } else {
+    }
+    else
+    {
         file->fd = ngx_stderr;
         file->name = *name;
     }
@@ -1068,23 +1206,25 @@ ngx_conf_open_file(ngx_cycle_t *cycle, ngx_str_t *name) //access_log error_log�
     return file;
 }
 
-
 static void
 ngx_conf_flush_files(ngx_cycle_t *cycle)
 {
-    ngx_uint_t        i;
-    ngx_list_part_t  *part;
-    ngx_open_file_t  *file;
+    ngx_uint_t i;
+    ngx_list_part_t *part;
+    ngx_open_file_t *file;
 
     ngx_log_debug0(NGX_LOG_DEBUG_CORE, cycle->log, 0, "flush files");
 
     part = &cycle->open_files.part;
     file = part->elts;
 
-    for (i = 0; /* void */ ; i++) {
+    for (i = 0; /* void */; i++)
+    {
 
-        if (i >= part->nelts) {
-            if (part->next == NULL) {
+        if (i >= part->nelts)
+        {
+            if (part->next == NULL)
+            {
                 break;
             }
             part = part->next;
@@ -1092,19 +1232,19 @@ ngx_conf_flush_files(ngx_cycle_t *cycle)
             i = 0;
         }
 
-        if (file[i].flush) {
+        if (file[i].flush)
+        {
             file[i].flush(&file[i], cycle->log);
         }
     }
 }
 
-
 void ngx_cdecl
 ngx_conf_log_error(ngx_uint_t level, ngx_conf_t *cf, ngx_err_t err,
-    const char *fmt, ...)
+                   const char *fmt, ...)
 {
-    u_char   errstr[NGX_MAX_CONF_ERRSTR], *p, *last;
-    va_list  args;
+    u_char errstr[NGX_MAX_CONF_ERRSTR], *p, *last;
+    va_list args;
 
     last = errstr + NGX_MAX_CONF_ERRSTR;
 
@@ -1112,16 +1252,19 @@ ngx_conf_log_error(ngx_uint_t level, ngx_conf_t *cf, ngx_err_t err,
     p = ngx_vslprintf(errstr, last, fmt, args);
     va_end(args);
 
-    if (err) {
+    if (err)
+    {
         p = ngx_log_errno(p, last, err);
     }
 
-    if (cf->conf_file == NULL) {
+    if (cf->conf_file == NULL)
+    {
         ngx_log_error(level, cf->log, 0, "%*s", p - errstr, errstr);
         return;
     }
 
-    if (cf->conf_file->file.fd == NGX_INVALID_FILE) {
+    if (cf->conf_file->file.fd == NGX_INVALID_FILE)
+    {
         ngx_log_error(level, cf->log, 0, "%*s in command line",
                       p - errstr, errstr);
         return;
@@ -1225,34 +1368,39 @@ char*(*set)(ngx_conf_t *cf, ngx_commandj 'vcmd,void *conf)
 char *
 ngx_conf_set_flag_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
-    char  *p = conf;
+    char *p = conf;
 
-    ngx_str_t        *value;//value[0]对应参数名 value[1]对应配置后面的参数值
-    ngx_flag_t       *fp;
-    ngx_conf_post_t  *post;
+    ngx_str_t *value; // value[0]对应参数名 value[1]对应配置后面的参数值
+    ngx_flag_t *fp;
+    ngx_conf_post_t *post;
 
-    fp = (ngx_flag_t *) (p + cmd->offset);
+    fp = (ngx_flag_t *)(p + cmd->offset);
 
-    if (*fp != NGX_CONF_UNSET) {
+    if (*fp != NGX_CONF_UNSET)
+    {
         return "is duplicate";
     }
 
     value = cf->args->elts;
-    if (ngx_strcasecmp(value[1].data, (u_char *) "on") == 0) {
+    if (ngx_strcasecmp(value[1].data, (u_char *)"on") == 0)
+    {
         *fp = 1;
-
-    } else if (ngx_strcasecmp(value[1].data, (u_char *) "off") == 0) {
+    }
+    else if (ngx_strcasecmp(value[1].data, (u_char *)"off") == 0)
+    {
         *fp = 0;
-
-    } else {
+    }
+    else
+    {
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                     "invalid value \"%s\" in \"%s\" directive, "
-                     "it must be \"on\" or \"off\"",
-                     value[1].data, cmd->name.data);
+                           "invalid value \"%s\" in \"%s\" directive, "
+                           "it must be \"on\" or \"off\"",
+                           value[1].data, cmd->name.data);
         return NGX_CONF_ERROR;
     }
 
-    if (cmd->post) {
+    if (cmd->post)
+    {
         post = cmd->post;
         return post->post_handler(cf, post, fp);
     }
@@ -1260,18 +1408,18 @@ ngx_conf_set_flag_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
-
 char *
 ngx_conf_set_str_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
-    char  *p = conf;
+    char *p = conf;
 
-    ngx_str_t        *field, *value;
-    ngx_conf_post_t  *post;
+    ngx_str_t *field, *value;
+    ngx_conf_post_t *post;
 
-    field = (ngx_str_t *) (p + cmd->offset);
+    field = (ngx_str_t *)(p + cmd->offset);
 
-    if (field->data) {
+    if (field->data)
+    {
         return "is duplicate";
     }
 
@@ -1279,7 +1427,8 @@ ngx_conf_set_str_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     *field = value[1];
 
-    if (cmd->post) {
+    if (cmd->post)
+    {
         post = cmd->post;
         return post->post_handler(cf, post, field);
     }
@@ -1394,46 +1543,50 @@ ngx_str_t*  pstr  =  mycf->my_str_array->elts ;
 char *
 ngx_conf_set_str_array_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
-    char  *p = conf;
+    char *p = conf;
 
-    ngx_str_t         *value, *s;
-    ngx_array_t      **a;
-    ngx_conf_post_t   *post;
+    ngx_str_t *value, *s;
+    ngx_array_t **a;
+    ngx_conf_post_t *post;
 
-    a = (ngx_array_t **) (p + cmd->offset);
+    a = (ngx_array_t **)(p + cmd->offset);
 
-    if (*a == NGX_CONF_UNSET_PTR) {
+    if (*a == NGX_CONF_UNSET_PTR)
+    {
         *a = ngx_array_create(cf->pool, 4, sizeof(ngx_str_t));
-        if (*a == NULL) {
+        if (*a == NULL)
+        {
             return NGX_CONF_ERROR;
         }
     }
 
     s = ngx_array_push(*a);
-    if (s == NULL) {
+    if (s == NULL)
+    {
         return NGX_CONF_ERROR;
     }
 
     value = cf->args->elts;
-/*
-    location /ttt {			
-        test_str_array      Content-Length ;			
-        test_str_array      Content-Encoding ;		
-    }
+    /*
+        location /ttt {
+            test_str_array      Content-Length ;
+            test_str_array      Content-Encoding ;
+        }
 
-    printf("yang test ...%u, [%s..%u]..[%s...%u].. <%s, %u>\n", cf->args->nelts, 
-        value[0].data, value[0].len , value[1].data, value[1].len, __FUNCTION__, __LINE__);
-    打印如下:
-    yang test ...2, [test_str_array..14]..[Content-Length...14].. <ngx_conf_set_str_array_slot, 1274>
-    yang test ...2, [test_str_array..14]..[Content-Encoding...16].. <ngx_conf_set_str_array_slot, 1274>
-    
-    如果是这个，则会调用两次ngx_conf_set_str_array_slot函数，
-    第一次:value[0]对应的name对应test_str_array，value[1]的name对应Content-Length
-    第一次:value[1]对应的name对应test_str_array，value[1]的name对应Content-Encoding
-*/
+        printf("yang test ...%u, [%s..%u]..[%s...%u].. <%s, %u>\n", cf->args->nelts,
+            value[0].data, value[0].len , value[1].data, value[1].len, __FUNCTION__, __LINE__);
+        打印如下:
+        yang test ...2, [test_str_array..14]..[Content-Length...14].. <ngx_conf_set_str_array_slot, 1274>
+        yang test ...2, [test_str_array..14]..[Content-Encoding...16].. <ngx_conf_set_str_array_slot, 1274>
+
+        如果是这个，则会调用两次ngx_conf_set_str_array_slot函数，
+        第一次:value[0]对应的name对应test_str_array，value[1]的name对应Content-Length
+        第一次:value[1]对应的name对应test_str_array，value[1]的name对应Content-Encoding
+    */
     *s = value[1];
 
-    if (cmd->post) {
+    if (cmd->post)
+    {
         post = cmd->post;
         return post->post_handler(cf, post, s);
     }
@@ -1449,24 +1602,27 @@ keyval_slot，必须把my_keyval初始化为NULL空指针，
 char *
 ngx_conf_set_keyval_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
-    char  *p = conf;
+    char *p = conf;
 
-    ngx_str_t         *value;
-    ngx_array_t      **a;
-    ngx_keyval_t      *kv;
-    ngx_conf_post_t   *post;
+    ngx_str_t *value;
+    ngx_array_t **a;
+    ngx_keyval_t *kv;
+    ngx_conf_post_t *post;
 
-    a = (ngx_array_t **) (p + cmd->offset);
+    a = (ngx_array_t **)(p + cmd->offset);
 
-    if (*a == NULL) {
+    if (*a == NULL)
+    {
         *a = ngx_array_create(cf->pool, 4, sizeof(ngx_keyval_t));
-        if (*a == NULL) {
+        if (*a == NULL)
+        {
             return NGX_CONF_ERROR;
         }
     }
 
     kv = ngx_array_push(*a);
-    if (kv == NULL) {
+    if (kv == NULL)
+    {
         return NGX_CONF_ERROR;
     }
 
@@ -1475,7 +1631,8 @@ ngx_conf_set_keyval_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     kv->key = value[1];
     kv->value = value[2];
 
-    if (cmd->post) {
+    if (cmd->post)
+    {
         post = cmd->post;
         return post->post_handler(cf, post, kv);
     }
@@ -1581,26 +1738,28 @@ char*(*set)(ngx_conf_t *cf, ngx_commandj 'vcmd,void *conf)
 char *
 ngx_conf_set_num_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
-    char  *p = conf;
+    char *p = conf;
 
-    ngx_int_t        *np;
-    ngx_str_t        *value;
-    ngx_conf_post_t  *post;
+    ngx_int_t *np;
+    ngx_str_t *value;
+    ngx_conf_post_t *post;
 
+    np = (ngx_int_t *)(p + cmd->offset);
 
-    np = (ngx_int_t *) (p + cmd->offset);
-
-    if (*np != NGX_CONF_UNSET) {
+    if (*np != NGX_CONF_UNSET)
+    {
         return "is duplicate";
     }
 
     value = cf->args->elts;
     *np = ngx_atoi(value[1].data, value[1].len);
-    if (*np == NGX_ERROR) {
+    if (*np == NGX_ERROR)
+    {
         return "invalid number";
     }
 
-    if (cmd->post) {
+    if (cmd->post)
+    {
         post = cmd->post;
         return post->post_handler(cf, post, np);
     }
@@ -1625,26 +1784,28 @@ g或者G的出现，这与ngx_conf_set_off_slot是不同的。
 char *
 ngx_conf_set_size_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
-    char  *p = conf;
+    char *p = conf;
 
-    size_t           *sp;
-    ngx_str_t        *value;
-    ngx_conf_post_t  *post;
+    size_t *sp;
+    ngx_str_t *value;
+    ngx_conf_post_t *post;
 
-
-    sp = (size_t *) (p + cmd->offset);
-    if (*sp != NGX_CONF_UNSET_SIZE) {
+    sp = (size_t *)(p + cmd->offset);
+    if (*sp != NGX_CONF_UNSET_SIZE)
+    {
         return "is duplicate";
     }
 
     value = cf->args->elts;
 
     *sp = ngx_parse_size(&value[1]);
-    if (*sp == (size_t) NGX_ERROR) {
+    if (*sp == (size_t)NGX_ERROR)
+    {
         return "invalid value";
     }
 
-    if (cmd->post) {
+    if (cmd->post)
+    {
         post = cmd->post;
         return post->post_handler(cf, post, sp);
     }
@@ -1758,26 +1919,28 @@ off_slot，必须把my_off初始化为NGX_CONF_UNSET宏，否则ngx_conf_set off
 char *
 ngx_conf_set_off_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
-    char  *p = conf;
+    char *p = conf;
 
-    off_t            *op;
-    ngx_str_t        *value;
-    ngx_conf_post_t  *post;
+    off_t *op;
+    ngx_str_t *value;
+    ngx_conf_post_t *post;
 
-
-    op = (off_t *) (p + cmd->offset);
-    if (*op != NGX_CONF_UNSET) {
+    op = (off_t *)(p + cmd->offset);
+    if (*op != NGX_CONF_UNSET)
+    {
         return "is duplicate";
     }
 
     value = cf->args->elts;
 
     *op = ngx_parse_offset(&value[1]);
-    if (*op == (off_t) NGX_ERROR) {
+    if (*op == (off_t)NGX_ERROR)
+    {
         return "invalid value";
     }
 
-    if (cmd->post) {
+    if (cmd->post)
+    {
         post = cmd->post;
         return post->post_handler(cf, post, op);
     }
@@ -1796,26 +1959,28 @@ sec slot，那么必须把my_sec初始化为NGX CONF UNSET宏    否则ngx_conf_
 char *
 ngx_conf_set_msec_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
-    char  *p = conf;
+    char *p = conf;
 
-    ngx_msec_t       *msp;
-    ngx_str_t        *value;
-    ngx_conf_post_t  *post;
+    ngx_msec_t *msp;
+    ngx_str_t *value;
+    ngx_conf_post_t *post;
 
-
-    msp = (ngx_msec_t *) (p + cmd->offset);
-    if (*msp != NGX_CONF_UNSET_MSEC) {
+    msp = (ngx_msec_t *)(p + cmd->offset);
+    if (*msp != NGX_CONF_UNSET_MSEC)
+    {
         return "is duplicate";
     }
 
     value = cf->args->elts;
 
     *msp = ngx_parse_time(&value[1], 0);
-    if (*msp == (ngx_msec_t) NGX_ERROR) {
+    if (*msp == (ngx_msec_t)NGX_ERROR)
+    {
         return "invalid value";
     }
 
-    if (cmd->post) {
+    if (cmd->post)
+    {
         post = cmd->post;
         return post->post_handler(cf, post, msp);
     }
@@ -1918,26 +2083,28 @@ char*(*set)(ngx_conf_t *cf, ngx_commandj 'vcmd,void *conf)
 char *
 ngx_conf_set_sec_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
-    char  *p = conf;
+    char *p = conf;
 
-    time_t           *sp;
-    ngx_str_t        *value;
-    ngx_conf_post_t  *post;
+    time_t *sp;
+    ngx_str_t *value;
+    ngx_conf_post_t *post;
 
-
-    sp = (time_t *) (p + cmd->offset);
-    if (*sp != NGX_CONF_UNSET) {
+    sp = (time_t *)(p + cmd->offset);
+    if (*sp != NGX_CONF_UNSET)
+    {
         return "is duplicate";
     }
 
     value = cf->args->elts;
 
     *sp = ngx_parse_time(&value[1], 1);
-    if (*sp == (time_t) NGX_ERROR) {
+    if (*sp == (time_t)NGX_ERROR)
+    {
         return "invalid value";
     }
 
-    if (cmd->post) {
+    if (cmd->post)
+    {
         post = cmd->post;
         return post->post_handler(cf, post, sp);
     }
@@ -1945,30 +2112,32 @@ ngx_conf_set_sec_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
-//例如fastcgi_buffers  5 3K     output_buffers  5   3K
+// 例如fastcgi_buffers  5 3K     output_buffers  5   3K
 char *
 ngx_conf_set_bufs_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
     char *p = conf;
 
-    ngx_str_t   *value;
-    ngx_bufs_t  *bufs;
+    ngx_str_t *value;
+    ngx_bufs_t *bufs;
 
-
-    bufs = (ngx_bufs_t *) (p + cmd->offset);
-    if (bufs->num) {
+    bufs = (ngx_bufs_t *)(p + cmd->offset);
+    if (bufs->num)
+    {
         return "is duplicate";
     }
 
     value = cf->args->elts;
 
     bufs->num = ngx_atoi(value[1].data, value[1].len);
-    if (bufs->num == NGX_ERROR || bufs->num == 0) {
+    if (bufs->num == NGX_ERROR || bufs->num == 0)
+    {
         return "invalid value";
     }
 
     bufs->size = ngx_parse_size(&value[2]);
-    if (bufs->size == (size_t) NGX_ERROR || bufs->size == 0) {
+    if (bufs->size == (size_t)NGX_ERROR || bufs->size == 0)
+    {
         return "invalid value";
     }
 
@@ -1999,7 +2168,7 @@ static ngx_command_t ngx_http_mytest_commands []  =  {
             ngx_conf set enum_slot, NGX_HTTP LOC_CONF_OFFSET,
                 offsetof (ngx_http_mytest conf_t,  my_enum_seq) ,
                  test enums },
-		ngx_null_command
+        ngx_null_command
     }
 
     这样，如果在nginx.conf中出现了配置项test enum banana;，my_enum_seq的值是2。
@@ -2008,24 +2177,25 @@ static ngx_command_t ngx_http_mytest_commands []  =  {
 char *
 ngx_conf_set_enum_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
-    char  *p = conf;
+    char *p = conf;
 
-    ngx_uint_t       *np, i;
-    ngx_str_t        *value;
-    ngx_conf_enum_t  *e;
+    ngx_uint_t *np, i;
+    ngx_str_t *value;
+    ngx_conf_enum_t *e;
 
-    np = (ngx_uint_t *) (p + cmd->offset);
+    np = (ngx_uint_t *)(p + cmd->offset);
 
-    if (*np != NGX_CONF_UNSET_UINT) {
+    if (*np != NGX_CONF_UNSET_UINT)
+    {
         return "is duplicate";
     }
 
     value = cf->args->elts;
-    e = cmd->post;//post为ngx_command_t的最后一个参数，需要我们提供空间存储  
+    e = cmd->post; // post为ngx_command_t的最后一个参数，需要我们提供空间存储
 
-    for (i = 0; e[i].name.len != 0; i++) { //这也就是为什么在提交定义post中的ngx_conf_enum_t中为什么最后一个成员一定要为{ ngx_null_string, 0 }
-        if (e[i].name.len != value[1].len
-            || ngx_strcasecmp(e[i].name.data, value[1].data) != 0)
+    for (i = 0; e[i].name.len != 0; i++)
+    { // 这也就是为什么在提交定义post中的ngx_conf_enum_t中为什么最后一个成员一定要为{ ngx_null_string, 0 }
+        if (e[i].name.len != value[1].len || ngx_strcasecmp(e[i].name.data, value[1].data) != 0)
         {
             continue;
         }
@@ -2148,10 +2318,10 @@ typedef struct {
   ngx_conf_bitmask_t ;
 下面以定义test_ bitmasks数组为例来进行说明。
 static ngx_conf_bitmask_t   test_bitmasks Ll  = {
-	{ngx_string ("good") ,  Ox0002  } ,
-	{ngx_string ( "better") ,  Ox0004  } ,
-	{ngx_string ( "best") ,  Ox0008  } ,
-	{ngx_null_string, O}
+    {ngx_string ("good") ,  Ox0002  } ,
+    {ngx_string ( "better") ,  Ox0004  } ,
+    {ngx_string ( "best") ,  Ox0008  } ,
+    {ngx_null_string, O}
 }
     如果配置顼名称定义为test_bitmask，在nginx.conf文件中test bitmask配置项后的参数
 只能是good、better、best这3个值之一。我们用ngx_http_myte st_conf_t中的以下成员：
@@ -2163,9 +2333,9 @@ static ngx_command_t   ngx_http_mytest_commands []  =  {
             ngx_conf set bitmask _slot,
                  NGX HTTP LOC CONF_OFFSET,
                 offsetof (ngx_http_mytest conf_t, my_bitmask) ,
-                test bitmasks 
-		},
-		ngx_null_command
+                test bitmasks
+        },
+        ngx_null_command
     }
 
 如果在nginx.conf中出现配置项test- bitmask best;，那么my_bitmask的值是Ox8。
@@ -2173,38 +2343,41 @@ static ngx_command_t   ngx_http_mytest_commands []  =  {
 char *
 ngx_conf_set_bitmask_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
-    char  *p = conf;
+    char *p = conf;
 
-    ngx_uint_t          *np, i, m;
-    ngx_str_t           *value;
-    ngx_conf_bitmask_t  *mask;
+    ngx_uint_t *np, i, m;
+    ngx_str_t *value;
+    ngx_conf_bitmask_t *mask;
 
-
-    np = (ngx_uint_t *) (p + cmd->offset);
+    np = (ngx_uint_t *)(p + cmd->offset);
     value = cf->args->elts;
-    mask = cmd->post; //参考test_bitmasks  把该数组中的字符串转换为对应的位图
+    mask = cmd->post; // 参考test_bitmasks  把该数组中的字符串转换为对应的位图
 
-    for (i = 1; i < cf->args->nelts; i++) {
-        for (m = 0; mask[m].name.len != 0; m++) {
+    for (i = 1; i < cf->args->nelts; i++)
+    {
+        for (m = 0; mask[m].name.len != 0; m++)
+        {
 
-            if (mask[m].name.len != value[i].len
-                || ngx_strcasecmp(mask[m].name.data, value[i].data) != 0)
+            if (mask[m].name.len != value[i].len || ngx_strcasecmp(mask[m].name.data, value[i].data) != 0)
             {
                 continue;
             }
 
-            if (*np & mask[m].mask) {
+            if (*np & mask[m].mask)
+            {
                 ngx_conf_log_error(NGX_LOG_WARN, cf, 0,
                                    "duplicate value \"%s\"", value[i].data);
-
-            } else {
+            }
+            else
+            {
                 *np |= mask[m].mask;
             }
 
             break;
         }
 
-        if (mask[m].name.len == 0) {
+        if (mask[m].name.len == 0)
+        {
             ngx_conf_log_error(NGX_LOG_WARN, cf, 0,
                                "invalid value \"%s\"", value[i].data);
 
@@ -2214,7 +2387,6 @@ ngx_conf_set_bitmask_slot(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     return NGX_CONF_OK;
 }
-
 
 #if 0
 
@@ -2226,11 +2398,10 @@ ngx_conf_unsupported(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
 #endif
 
-
 char *
 ngx_conf_deprecated(ngx_conf_t *cf, void *post, void *data)
 {
-    ngx_conf_deprecated_t  *d = post;
+    ngx_conf_deprecated_t *d = post;
 
     ngx_conf_log_error(NGX_LOG_WARN, cf, 0,
                        "the \"%s\" directive is deprecated, "
@@ -2240,15 +2411,16 @@ ngx_conf_deprecated(ngx_conf_t *cf, void *post, void *data)
     return NGX_CONF_OK;
 }
 
-
 char *
 ngx_conf_check_num_bounds(ngx_conf_t *cf, void *post, void *data)
 {
-    ngx_conf_num_bounds_t  *bounds = post;
-    ngx_int_t  *np = data;
+    ngx_conf_num_bounds_t *bounds = post;
+    ngx_int_t *np = data;
 
-    if (bounds->high == -1) {
-        if (*np >= bounds->low) {
+    if (bounds->high == -1)
+    {
+        if (*np >= bounds->low)
+        {
             return NGX_CONF_OK;
         }
 
@@ -2259,7 +2431,8 @@ ngx_conf_check_num_bounds(ngx_conf_t *cf, void *post, void *data)
         return NGX_CONF_ERROR;
     }
 
-    if (*np >= bounds->low && *np <= bounds->high) {
+    if (*np >= bounds->low && *np <= bounds->high)
+    {
         return NGX_CONF_OK;
     }
 

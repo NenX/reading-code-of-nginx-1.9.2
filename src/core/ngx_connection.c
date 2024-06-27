@@ -476,8 +476,7 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
               默认情况下,server重启,调用socket,bind,然后listen,会失败.因为该端口正在被使用.如果设定SO_REUSEADDR,那么server重启才会成功.因此,
               所有的TCP server都必须设定此选项,用以应对server重启的现象.
               */
-            if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
-                           (const void *)&reuseaddr, sizeof(int)) == -1)
+            if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (const void *)&reuseaddr, sizeof(int)) == -1)
             {
                 ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
                               "setsockopt(SO_REUSEADDR) %V failed, close sock:%d",
@@ -561,7 +560,9 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
 
             ngx_log_debug2(NGX_LOG_DEBUG_CORE, log, 0,
                            "bind() %V #%d ", &ls[i].addr_text, s);
-
+            ngx_log_stderr(0, "<%s:%d %s>: bind() %V #%d",
+                           __FILE__, __LINE__, __FUNCTION__,
+                           &ls[i].addr_text, s);
             if (bind(s, ls[i].sockaddr, ls[i].socklen) == -1)
             {
                 err = ngx_socket_errno;

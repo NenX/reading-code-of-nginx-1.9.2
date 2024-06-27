@@ -628,8 +628,11 @@ ngx_http_init_phase_handlers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
     use_rewrite = cmcf->phases[NGX_HTTP_REWRITE_PHASE].handlers.nelts ? 1 : 0;
     use_access = cmcf->phases[NGX_HTTP_ACCESS_PHASE].handlers.nelts ? 1 : 0;
 
+    // TIP: NGX_HTTP_POST_REWRITE_PHASE
     n = use_rewrite + use_access + cmcf->try_files + 1 /* find config phase */;
 
+    // TIP: use_rewrite 为1时， NGX_HTTP_POST_REWRITE_PHASE 阶段 n++,ph++
+    // TIP: use_access 为1时， NGX_HTTP_POST_ACCESS_PHASE  阶段 n++,ph++
     for (i = 0; i < NGX_HTTP_LOG_PHASE; i++)
     {
         n += cmcf->phases[i].handlers.nelts;
@@ -989,9 +992,14 @@ proxy_pass http://fetch;
 // ngx_http_add_location
 // cscf为server{}配置里面的srv_conf,pclcf->locations为该server{}类里面的所有(包括解析server行的时候开辟的local_crate和解析location行的时候开辟的loc_creat空间)loc_conf头部
 // 参考:http://blog.csdn.net/fengmo_q/article/details/6683377和http://tech.uc.cn/?p=300
+// TIP: cscf 为 cmcf->servers 的一项, pclcf 为cscf->ctx->loc_conf[ngx_http_core_module.ctx_index]
+// TIP: 执行完 cscf->named_locations 包含 locations 中的命名location;
+// TIP: 执行完 pclcf->regex_locations 包含 locations 中的正则location;
+// TIP: 执行完 pclcf->locations 只剩下完全匹配location和前缀location （= /abc 、 ^~ /abc 、/abc ）
+// TIP: 执行完 pclcf->locations 按字母排序，字母相同长度小的在前，如果完全匹配和前缀匹配name相同，则完全匹配在前
 static ngx_int_t
-ngx_http_init_locations(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
-                        ngx_http_core_loc_conf_t *pclcf) // 形成3叉树见ngx_http_init_static_location_trees
+ngx_http_init_locations(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf, ngx_http_core_loc_conf_t *pclcf)
+// 形成3叉树见ngx_http_init_static_location_trees
 {
     ngx_uint_t n;
     ngx_queue_t *q, *locations,
@@ -1046,7 +1054,8 @@ ngx_http_init_locations(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
         }
      */
     // locations是直属于server{}的location{}块(上面的#1 #2)， 或者直属于#1的#2 #3,或者直属于#4中的#5 #6。所以需要三次调用ngx_queue_sort
-    // 排序完后进行location切分。location排序完，整个list的结构是：前缀匹配|绝对匹配--->正则匹配--->命名--> 未命名
+    // TIP: 排序完后进行location切分。location排序完，整个list的结构是：前缀匹配|绝对匹配--->正则匹配--->命名--> 未命名
+    // TIP: 对于exact和inclusive，先按照字母排序，前面字母相同的，长度短的在前。如果name相同则exact在前，inclusive在后
     ngx_queue_sort(locations, ngx_http_cmp_locations);
 
     named = NULL;
@@ -1056,9 +1065,8 @@ ngx_http_init_locations(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     r = 0;
 #endif
 
-    for (q = ngx_queue_head(locations);
-         q != ngx_queue_sentinel(locations);
-         q = ngx_queue_next(q)) // 找到queue中正则表达式和命名location中的位置
+    for (q = ngx_queue_head(locations); q != ngx_queue_sentinel(locations); q = ngx_queue_next(q))
+    // 找到queue中正则表达式和命名location中的位置
     {
         lq = (ngx_http_location_queue_t *)q;
 
@@ -1085,16 +1093,6 @@ ngx_http_init_locations(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
         }
 
 #endif
-        /*
-           location / {
-             try_files index.html index.htm @fallback;
-           }
-
-           location @fallback {
-             root /var/www/error;
-             index index.html;
-           }
-       */
         if (clcf->named)
         {
             n++; // location后为@name的location个数
@@ -1114,7 +1112,7 @@ ngx_http_init_locations(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     }
 
     /*
-    先分离noname(没有像后面两个那样集中管理)，在分离named(保存到cscf->named_locations)，最后分离regex(保存到pclcf->regex_locations= clcfp)，
+    这里分离noname(没有像后面两个那样集中管理)，在分离named(保存到cscf->named_locations)，最后分离regex(保存到pclcf->regex_locations= clcfp)，
     分离这些另类之后，我们处理那些普通的location，普通的location大家应该知道是指的哪些，nginx称为static location。
     */
     if (q != ngx_queue_sentinel(locations))
@@ -1123,6 +1121,7 @@ ngx_http_init_locations(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     }
     // 实际上这里拆分出的noname放入tail后，如果locations中包含named location,则noname和name放一起(cscf->named_locations)，如果没有named但是有regex，
     // 则和regex放一起(pclcf->regex_locations)，如果name和regex和都没有，则和普通locations放一起(pclcf->locations)
+    // 当 cscf 为 NULL 说明是嵌套location，命名location不可以被嵌套，所以不会走进去
     if (named)
     {
         clcfp = ngx_palloc(cf->pool,
@@ -1183,7 +1182,21 @@ ngx_http_init_locations(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     }
 
 #endif
+    // ++
+    printf("ngx_http_init_locations +++++++++\n");
+    locations = pclcf->locations;
+    for (q = ngx_queue_head(locations);
+         q != ngx_queue_sentinel(locations);
+         q = ngx_queue_next(q)) // 找到queue中正则表达式和命名location中的位置
+    {
+        lq = (ngx_http_location_queue_t *)q;
 
+        clcf = lq->exact ? lq->exact : lq->inclusive;
+        printf("<%s:%d %s>: clcf->name: %s\n", __FILE__, __LINE__, __FUNCTION__, clcf->name.data);
+    }
+    printf("ngx_http_init_locations --------\n");
+
+    // ++
     return NGX_OK;
 }
 
@@ -1204,7 +1217,7 @@ ngx_http_init_static_location_trees(ngx_conf_t *cf,
     ngx_queue_t *q, *locations;
     ngx_http_core_loc_conf_t *clcf;
     ngx_http_location_queue_t *lq;
-
+    // TIP: 经过 ngx_http_init_locations 处理，locations 仅包括 完全匹配和前缀匹配
     locations = pclcf->locations;
 
     if (locations == NULL)
@@ -1216,6 +1229,7 @@ ngx_http_init_static_location_trees(ngx_conf_t *cf,
     {
         return NGX_OK;
     }
+    printf("ngx_http_init_static_location_trees ++++++++\n");
 
     for (q = ngx_queue_head(locations);
          q != ngx_queue_sentinel(locations);
@@ -1225,17 +1239,21 @@ ngx_http_init_static_location_trees(ngx_conf_t *cf,
 
         clcf = lq->exact ? lq->exact : lq->inclusive;
 
+        printf("<%s:%d %s>: clcf->name: %s, exact: %d \n", __FILE__, __LINE__, __FUNCTION__, clcf->name.data, lq->exact ? 1 : 0);
+
         /* 这里也是由于nested location，需要递归一下 */
         if (ngx_http_init_static_location_trees(cf, clcf) != NGX_OK)
         {
             return NGX_ERROR;
         }
     }
+    printf("ngx_http_init_static_location_trees --------\n");
 
     /*
     join队列中名字相同的inclusive和exact类型location，也就是如果某个exact_match的location名字和普通字符串匹配的location名字相同的话，
     就将它们合到一个节点中，分别保存在节点的exact和inclusive下，这一步的目的实际是去重，为后面的建立排序树做准备
     */
+    // TIP: 如果存在name相同的exact和inclusive，将inclusive赋值给exact，然后把inclusive删除，也就是合并
     if (ngx_http_join_exact_locations(cf, locations) != NGX_OK)
     {
         return NGX_ERROR;
@@ -1243,6 +1261,19 @@ ngx_http_init_static_location_trees(ngx_conf_t *cf,
 
     /* 递归每个location节点，得到当前节点的名字为其前缀的location的列表，保存在当前节点的list字段下 */
     ngx_http_create_locations_list(locations, ngx_queue_head(locations));
+
+    // +++
+    printf("ngx_http_create_locations_tree ++++++++\n");
+
+    for (q = ngx_queue_head(locations); q != ngx_queue_sentinel(locations); q = ngx_queue_next(q))
+    {
+        lq = (ngx_http_location_queue_t *)q;
+        clcf = lq->exact ? lq->exact : lq->inclusive;
+        printf("<%s:%d %s>: clcf->name: %s, exact: %d \n", __FILE__, __LINE__, __FUNCTION__, clcf->name.data, lq->exact ? 1 : 0);
+    }
+    printf("ngx_http_create_locations_tree --------\n");
+
+    // +++
 
     /* 递归建立location三叉排序树 */
     pclcf->static_locations = ngx_http_create_locations_tree(cf, locations, 0);
@@ -1322,12 +1353,12 @@ location @fetch(
 proxy_pass http://fetch;
 )
 */
-
-// locations为父级对应的loc_conf[]的location  clcf为本级的loc_conf[]
+// pctx->loc_conf[ngx_http_core_module.ctx_index];
+// TIP: locations 为父级 pclcf->locations  clcf 为本级 ctx->loc_conf[ngx_http_core_module.ctx_index]
 // 把所有的location{}中的配置通过lq->queue连接在一起，最终头部为父级server{}中的loc_conf配置里
+// TIP: 每次解析到 location 时，创建lq，将当前的clcf设置到 lq->exact 或者 lq->inclusive，再将lq插入到 pclcf->locations
 ngx_int_t
-ngx_http_add_location(ngx_conf_t *cf, ngx_queue_t **locations,
-                      ngx_http_core_loc_conf_t *clcf) // 和ngx_http_init_locations配合使用
+ngx_http_add_location(ngx_conf_t *cf, ngx_queue_t **locations, ngx_http_core_loc_conf_t *clcf) // 和ngx_http_init_locations配合使用
 {
     ngx_http_location_queue_t *lq;
 
@@ -1348,7 +1379,7 @@ ngx_http_add_location(ngx_conf_t *cf, ngx_queue_t **locations,
     {
         return NGX_ERROR;
     }
-
+    // TIP: =、~、~*、if、@
     if (clcf->exact_match
 #if (NGX_PCRE)
         || clcf->regex
@@ -1358,8 +1389,9 @@ ngx_http_add_location(ngx_conf_t *cf, ngx_queue_t **locations,
         lq->exact = clcf;
         lq->inclusive = NULL;
     }
+    // TIP: 前缀匹配：location ^~ /abc 或者 location /abc
     else
-    { // 前缀匹配
+    {
         lq->exact = NULL;
         lq->inclusive = clcf; // location ^~
     }
@@ -1451,6 +1483,7 @@ proxy_pass http://fetch;
 3 如果两个比较节点中，插入的是正则location，那么就把插入即诶的那加入到后面，如果比较的两个节点都是正则，那么就按照原定次序，即保持用户在配置文件里书序的先后顺序。
 //所以插入的降序是未命名、命名、正则、前缀匹配|绝对匹配。
 */
+// TIP: <=0 时，不排序
 static ngx_int_t
 ngx_http_cmp_locations(const ngx_queue_t *one, const ngx_queue_t *two)
 {
@@ -1520,7 +1553,7 @@ ngx_http_cmp_locations(const ngx_queue_t *one, const ngx_queue_t *two)
     }
 
 #endif
-
+    // TIP: 先按照字母排序，前面字母相同的，长度短的在前。如果name相同则exact在前，inclusive在后
     rc = ngx_filename_cmp(first->name.data, second->name.data,
                           ngx_min(first->name.len, second->name.len) + 1); // 前缀匹配
 
@@ -1560,7 +1593,7 @@ ngx_http_join_exact_locations(ngx_conf_t *cf, ngx_queue_t *locations)
 
                 return NGX_ERROR;
             }
-
+            // TIP: ngx_http_init_locations 的排序，如果name相同，则exact在前，inclusive在后
             lq->inclusive = lx->inclusive;
 
             ngx_queue_remove(x);
@@ -1628,10 +1661,11 @@ ngx_http_create_locations_list(ngx_queue_t *locations, ngx_queue_t *q) // 图形
             继节点肯定和后缀节点不一样，并且不可能有共同的后缀；如果后继节点和q节点的交集做比较，如果不同，就表示不是同一个前缀，所以
             可以看出，从q节点的location list应该是从q.next到x.prev节点
           */
+        // TIP: lx 为 lq 的下一个。先按照字母排序，前面字母相同的，长度短的在前。如果name相同则exact在前，inclusive在后
         lx = (ngx_http_location_queue_t *)x;
 
         if (len > lx->name->len || ngx_filename_cmp(name, lx->name->data, len) != 0)
-        {
+        { // TIP: lx->name 没有包含 lq->name，跳过循环，到下一步
             break;
         }
     }
@@ -1643,9 +1677,9 @@ ngx_http_create_locations_list(ngx_queue_t *locations, ngx_queue_t *q) // 图形
         ngx_http_create_locations_list(locations, x);
         return;
     }
-
+    // TIP: 执行完 locations [/abc]; tail lq->list [/abc/d,/abc/d/e,/abc/f,/abc/g, /xxx, ...]
     ngx_queue_split(locations, q, &tail); // location从q节点开始分割，那么现在location就是q节点之前的一段list
-    ngx_queue_add(&lq->list, &tail);      // q节点的list初始为从q节点开始到最后的一段list
+    ngx_queue_add(&lq->list, &tail);      // TIP: ngx_http_add_location 初始化。 q节点的list初始为从q节点开始到最后的一段list
 
     /*
         原则上因为需要递归两段list，一个为p的location list（从p.next到x.prev），另一段为x.next到location的最后一个元素，这里如果x
@@ -1658,10 +1692,14 @@ ngx_http_create_locations_list(ngx_queue_t *locations, ngx_queue_t *q) // 图形
     }
 
     // 到了这里可以知道需要递归两段location list了
-    ngx_queue_split(&lq->list, x, &tail);                                 // 再次分割，lq->list剩下p.next到x.prev的一段了
-    ngx_queue_add(locations, &tail);                                      // 放到location 中去
+    // TIP: 执行完 locations [/abc,/xxx, ...,]; tail [/xxx, ...,]; lq->list [/abc/d, /abc/d/e, /abc/f, /abc/g ]
+    ngx_queue_split(&lq->list, x, &tail); // 再次分割，lq->list剩下p.next到x.prev的一段了
+    ngx_queue_add(locations, &tail);      // 放到location 中去
+
+    // TIP: 处理 [/abc/d, /abc/d/e, /abc/f, /abc/g ]
     ngx_http_create_locations_list(&lq->list, ngx_queue_head(&lq->list)); // 递归p.next到x.prev
 
+    // TIP: 处理 [/abc,/xxx, ...,];
     ngx_http_create_locations_list(locations, x); // 递归x.next到location 最后了
 }
 
@@ -1690,6 +1728,7 @@ ngx_http_create_locations_tree(ngx_conf_t *cf, ngx_queue_t *locations,
 
     lq = (ngx_http_location_queue_t *)q;
     len = lq->name->len - prefix;
+    printf("ngx_http_create_locations_tree enter -------- %s\n", lq->name->data);
 
     node = ngx_palloc(cf->pool,
                       offsetof(ngx_http_location_tree_node_t, name) + len);
@@ -2081,8 +2120,7 @@ ngx_http_add_server(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf, ngx_http_con
 */
 // 可以参考http://blog.csdn.net/chosen0ne/article/details/7754608
 static ngx_int_t
-ngx_http_optimize_servers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
-                          ngx_array_t *ports)
+ngx_http_optimize_servers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf, ngx_array_t *ports)
 {
     ngx_uint_t p, a;
     ngx_http_conf_port_t *port;
@@ -2096,14 +2134,11 @@ ngx_http_optimize_servers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
     port = ports->elts;
     for (p = 0; p < ports->nelts; p++)
     {
-        // 将addrs排序，带通配符的地址排在后面， (listen 1.2.2.2:30 bind) > listen 1.1.1.1:30  > listen *:30
+        // 将addrs排序，带通配符的地址排在后面， (listen 1.2.2.2:30 bind) > listen 1.1.1.1:30  > listen *:30 (或者 listen 30)
         ngx_sort(port[p].addrs.elts, (size_t)port[p].addrs.nelts,
                  sizeof(ngx_http_conf_addr_t), ngx_http_cmp_conf_addrs);
 
-        /*
-         * check whether all name-based servers have the same
-         * configuration as a default server for given address:port
-         */
+        // check whether all name-based servers have the same configuration as a default server for given address:port
 
         addr = port[p].addrs.elts;
         for (a = 0; a < port[p].addrs.nelts; a++)
@@ -2366,11 +2401,11 @@ ngx_http_init_listening(ngx_conf_t *cf, ngx_http_conf_port_t *port)
 
     /*
      * If there is a binding to an "*:port" then we need to bind() to
-     * the "*:port" only and ignore other implicit bindings.  The bindings
-     * have been already sorted: explicit bindings are on the start, then
-     * implicit bindings go, and wildcard binding is in the end.  //例如有listen 80(implicit bindings);  listen *:80,则第一个无效，直接用第二个就行了
+     * the "*:port" only and ignore other implicit bindings.
+     * 例如有listen 80(implicit bindings);  listen *:80,则第一个无效，直接用第二个就行了
      */
-
+    // TIP: The bindings have been already sorted: explicit bindings are on the start, then implicit bindings go, and wildcard binding is in the end.
+    // 带通配符的地址排在后面， (listen 1.2.2.2:30 bind) > listen 1.1.1.1:30  > listen *:30 (或者 listen 30)
     if (addr[last - 1].opt.wildcard)
     {                                //"*:port"  addr是拍了序的，见ngx_http_optimize_servers，最后面的是通配符
         addr[last - 1].opt.bind = 1; // 如果是通配符，这里把bind值1
@@ -2419,6 +2454,7 @@ ngx_http_init_listening(ngx_conf_t *cf, ngx_http_conf_port_t *port)
         /*
          * servers会用来保存虚拟主机的信息，在处理请求时会赋值给request 用于进行虚拟主机的匹配
          */
+        // ???: 什么情况走到这里
         ls->servers = hport;
 
         // 如果是未精确配置的listen(bind = 0并且有配置一项通配符，则这里的i是通配符所在addr[]的位置)，如果没有配置通配符，则有多少个listen配置就会执行这里多少次。

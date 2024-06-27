@@ -774,7 +774,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 #endif
         }
     }
-    // FFF ngx_init_cycle 中 ngx_open_listening_sockets
+    // FFF: ngx_init_cycle 中 ngx_open_listening_sockets
     if (ngx_open_listening_sockets(cycle) != NGX_OK)
     {
         goto failed;

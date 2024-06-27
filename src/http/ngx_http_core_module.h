@@ -950,9 +950,16 @@ Nginx的http配置结构体的组织结构:http://tech.uc.cn/?p=300
 */ 
 
 //参考ngx_http_core_location
+//TIP: 各种location的属性：
+// location = /abc，完全匹配，exact_match=1
+// if(){}，name 和 父级的name相同，noname=1
+// location ~* /abc，正则，regex对象不为NULL
+// location ^~ /abc，前缀匹配，noregex=1，不支持正则
+// location /abc，和前缀匹配类似，但noregex=0，不支持正则
 struct ngx_http_core_loc_conf_s {
     //ngx_http_add_location中把精确匹配 正则表达式 name  noname配置以外的其他配置都算做前缀匹配  例如//location ^~  xxx{}      location /XXX {}
-    ngx_str_t     name;          /* location name */ //location后面跟的的uri字符串  不包括^~  = 等, 例如location ^~  xxx{}，则name为xxx
+    //TIP: location后面跟的的uri字符串  不包括^~  = 等, 例如location ^~  xxx{}，则name为xxx，命名location的name包含@
+    ngx_str_t     name;          
 
 //ngx_http_add_location中把精确匹配 正则表达式 name  noname配置以外的其他配置都算做前缀匹配  例如//location ^~  xxx{}      location /XXX {}
 #if (NGX_PCRE)
@@ -998,7 +1005,8 @@ location @fallback {
     
 
     unsigned      exact_match:1; //类似 location = / {}，所谓准确匹配。
-    unsigned      noregex:1; //没有正则，指类似location ^~ /a { ... } 的location。  前缀匹配
+    //TIP: 没有正则，指类似location ^~ /a { ... } 的location。  前缀匹配
+    unsigned      noregex:1;
     
 
     unsigned      auto_redirect:1;
@@ -1022,6 +1030,7 @@ location @fallback {
 
     /* pointer to the modules' loc_conf */
     //执行location{} ctx的ctx->loc_conf
+    //TIP: 解析到location{}时，会创建一个ctx，ctx->loc_conf[ngx_http_core_module.ctx_index]->loc_conf = ctx->loc_conf;
     void        **loc_conf; //赋值见ngx_http_core_location，指向ngx_http_conf_ctx_t->loc_conf
 
     uint32_t      limit_except; //"limit_except"配置
@@ -1216,10 +1225,12 @@ typedef struct {  //图形化参考http://blog.chinaunix.net/uid-27767798-id-375
     ngx_queue_t                      queue;//所有的loc配置通过该队列链接在一起
 
     //下面这两个字段指明是精确匹配还是前缀匹配，因为该ngx_http_location_queue_t结构体是最后在ngx_http_init_locations拆分后的locations，因此只有精确匹配和前缀匹配这两种location
-    //完全匹配 重命名(@name)location  noname  正则表达式匹配,节点都添加到exact指针
-    ngx_http_core_loc_conf_t        *exact; //正则表达式 noname name 往前匹配的location都是存到这里面，见ngx_http_add_location
+
+    //TIP: 完全匹配(=) 正则表达式(~、~*) noname(if) name(@name) 往前匹配的location都是存到这里面，见 ngx_http_add_location
+    ngx_http_core_loc_conf_t        *exact; 
     //ngx_http_add_location中赋值     精确匹配 正则表达式 name  noname配置以外的其他配置都算做前缀匹配  例如//location ^~  xxx{}      location /XXX {}
-    ngx_http_core_loc_conf_t        *inclusive; //location ^~   应该是前缀匹配  前缀匹配ngx_http_core_loc_conf_t节点添加到该指针上
+    //TIP: 前缀匹配 (location ^~)    ngx_http_core_loc_conf_t节点添加到该指针上
+    ngx_http_core_loc_conf_t        *inclusive;
     
     ngx_str_t                       *name;//当前location /xxx {}中的/XXXX
     u_char                          *file_name; //所在的配置文件名

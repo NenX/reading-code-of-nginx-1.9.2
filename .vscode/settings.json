@@ -14,7 +14,8 @@
         "ngx_times.h": "c",
         "cmath": "c",
         "typeinfo": "c",
-        "ngx_http.h": "c"
+        "ngx_http.h": "c",
+        "sockaddr.h": "c"
     },
     "favorites.resources": [
         {

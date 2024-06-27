@@ -881,6 +881,7 @@ Accept-Encoding:gzip,deflate.
     r->lowcase_index;
     r->header_hash;
 */
+//TIP: 解析一行请求头
 ngx_int_t
 ngx_http_parse_header_line(ngx_http_request_t *r, ngx_buf_t *b,
     ngx_uint_t allow_underscores) //每解析完一行name:value就会返回NGX_OK

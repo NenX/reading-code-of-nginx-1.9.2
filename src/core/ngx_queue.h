@@ -180,6 +180,7 @@ h为链表容器，q为链表h中的一个元素，这个方法可以将链表h�
 而n由后半部分组成，q为首元素,如果以前n有成员，则新的n为从h中拆分的部分+n原有的数据
 */
 //???: h0<->n<->q (h->prev 指向 n, n->next 指向 q, q->next 一直指向到 h0)  q0<->h (h->next 一直指向到 q 的上一个元素的 q0，q0->next 指向 h)
+//TIP: [h0,h1...] [q,n0,n1...]
 #define ngx_queue_split(h, q, n)                                              \
     (n)->prev = (h)->prev;                                                    \
     (n)->prev->next = n;                                                      \

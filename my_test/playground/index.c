@@ -81,27 +81,16 @@ static void do_test(ngx_http_request_t *r, ngx_buf_t *b)
 
     set_data(testlist);
 
-    // traget_part = &testlist->part;
+    // test
+    bzero(my_buf, 1024);
+    u_int size_of_short = sizeof(short);
+    u_int size_of_short_int = sizeof(short int);
+    u_int size_of_int = sizeof(int);
+    sprintf(my_buf, "<h1>size_of_short:%d,size_of_short_int:%d,size_of_int%d</h1>", size_of_short, size_of_short_int, size_of_int);
 
-    // tartget_str = traget_part->elts;
-    // for (size_t i = 0;; i++)
-    // {
-    //     bzero(my_buf, 1024);
-    //     /* code */
-    //     if (i >= traget_part->nelts)
-    //     {
-    //         if (traget_part->next == NULL)
-    //             break;
+    append_buf(b, my_buf);
 
-    //         traget_part = traget_part->next;
-    //         tartget_str = traget_part->elts;
-
-    //         i = 0;
-    //     }
-    //     sprintf(my_buf, "<li>list: %*s,%d</li>", (int)tartget_str[i].len, tartget_str[i].data, (int)tartget_str[i].len);
-
-    //     append_buf(b, my_buf);
-    // }
+    // test
     traget_part = &testlist->part;
     tartget_str = traget_part->elts;
     size_t idx = 0;
