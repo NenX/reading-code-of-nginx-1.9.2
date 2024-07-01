@@ -4,6 +4,7 @@ a.createServer((req, res) => {
     res.writeHead(200, 'OK', { 'Content-Type': 'text/html', 'charset': 'utf8' })
     // const resText = '"三一重工,13.41,dddd,xxxxxx,298900,gggg,zzzz"'
     const b = Buffer.from(resText, 'utf8')
+    console.log('req',req.headers)
     res.write(b)
     res.end();
 })

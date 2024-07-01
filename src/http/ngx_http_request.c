@@ -662,7 +662,7 @@ ngx_http_create_request(ngx_connection_t *c)
         r->main_filter_need_in_memory = 1;
     }
 #endif
-
+    //TIP: 用于判断区分原始请求，还是派生的子请求。原始请求：r.main == r
     r->main = r;
     r->count = 1;
 
@@ -1088,7 +1088,7 @@ ngx_http_process_request_line(ngx_event_t *rev) // ngx_http_process_request_line
             {
                 r->http_protocol.len = r->request_end - r->http_protocol.data;
             }
-
+            // 解析到 r->uri
             if (ngx_http_process_request_uri(r) != NGX_OK)
             {
                 return;

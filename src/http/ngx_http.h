@@ -207,5 +207,94 @@ extern ngx_http_output_header_filter_pt  ngx_http_top_header_filter;
 extern ngx_http_output_body_filter_pt    ngx_http_top_body_filter;
 extern ngx_http_request_body_filter_pt   ngx_http_top_request_body_filter;
 
+typedef struct {
+    //proxy_pass  http://10.10.0.103:8080/tttxx;中的http://10.10.0.103:8080
+    ngx_str_t                      key_start; // 初始状态plcf->vars.key_start = plcf->vars.schema;
+    /*  "http://" 或者 "https://"  */ //指向的是uri，当时schema->len="http://" 或者 "https://"字符串长度7或者8，参考ngx_http_proxy_pass
+    ngx_str_t                      schema; ////proxy_pass  http://10.10.0.103:8080/tttxx;中的http://
+    
+    ngx_str_t                      host_header;//proxy_pass  http://10.10.0.103:8080/tttxx; 中的10.10.0.103:8080
+    ngx_str_t                      port; //"80"或者"443"，见ngx_http_proxy_set_vars
+    //proxy_pass  http://10.10.0.103:8080/tttxx; 中的/tttxx         uri不带http://http://10.10.0.103:8080 url带有http://10.10.0.103:8080
+    ngx_str_t                      uri; //ngx_http_proxy_set_vars里面赋值   uri是proxy_pass  http://10.10.0.103:8080/xxx中的/xxx，如果
+    //proxy_pass  http://10.10.0.103:8080则uri长度为0，没有uri
+} ngx_http_proxy_vars_t;
+
+
+typedef struct {
+    ngx_array_t                   *flushes;
+     /* 
+    把proxy_set_header与ngx_http_proxy_headers合在一起，然后把其中的key:value字符串和长度信息添加到headers->lengths和headers->values中
+    把ngx_http_proxy_cache_headers合在一起，然后把其中的key:value字符串和长度信息添加到headers->lengths和headers->values中
+     */
+    //1. 里面存储的是ngx_http_proxy_headers和proxy_set_header设置的头部信息头添加到该lengths和values 存入ngx_http_proxy_loc_conf_t->headers
+    //2. 里面存储的是ngx_http_proxy_cache_headers设置的头部信息头添加到该lengths和values  存入ngx_http_proxy_loc_conf_t->headers_cache
+    ngx_array_t                   *lengths; //创建空间和赋值见ngx_http_proxy_init_headers
+    ngx_array_t                   *values;  //创建空间和赋值见ngx_http_proxy_init_headers
+    ngx_hash_t                     hash;
+} ngx_http_proxy_headers_t;
+
+typedef struct {
+    ngx_http_upstream_conf_t       upstream;
+
+    /* 下面这几个和proxy_set_body XXX配置相关 proxy_set_body设置包体后，就不会传送客户端发送来的数据到后端服务器(只传送proxy_set_body设置的包体)，
+    如果没有设置，则会发送客户端包体数据到后端， 参考ngx_http_proxy_create_request */
+    ngx_array_t                   *body_flushes; //从proxy_set_body XXX配置中获取，见ngx_http_proxy_merge_loc_conf
+    ngx_array_t                   *body_lengths; //从proxy_set_body XXX配置中获取，见ngx_http_proxy_merge_loc_conf
+    ngx_array_t                   *body_values;  //从proxy_set_body XXX配置中获取，见ngx_http_proxy_merge_loc_conf
+    ngx_str_t                      body_source; //proxy_set_body XXX配置中的xxx
+
+    //数据来源是ngx_http_proxy_headers  proxy_set_header，见ngx_http_proxy_init_headers
+    ngx_http_proxy_headers_t       headers;//创建空间和赋值见ngx_http_proxy_merge_loc_conf
+#if (NGX_HTTP_CACHE)
+    //数据来源是ngx_http_proxy_cache_headers，见ngx_http_proxy_init_headers
+    ngx_http_proxy_headers_t       headers_cache;//创建空间和赋值见ngx_http_proxy_merge_loc_conf
+#endif
+    //通过proxy_set_header Host $proxy_host;设置并添加到该数组中
+    ngx_array_t                   *headers_source; //创建空间和赋值见ngx_http_proxy_init_headers
+
+    //解析uri中的变量的时候会用到下面两个，见ngx_http_proxy_pass  proxy_pass xxx中如果有变量，下面两个就不为空
+    ngx_array_t                   *proxy_lengths;
+    ngx_array_t                   *proxy_values;
+    //proxy_redirect [ default|off|redirect replacement ]; 
+    //成员类型ngx_http_proxy_rewrite_t
+    ngx_array_t                   *redirects; //和配置proxy_redirect相关，见ngx_http_proxy_redirect创建空间
+    ngx_array_t                   *cookie_domains;
+    ngx_array_t                   *cookie_paths;
+
+    /* 此配置项表示转发时的协议方法名。例如设置为：proxy_method POST;那么客户端发来的GET请求在转发时方法名也会改为POST */
+    ngx_str_t                      method;
+    ngx_str_t                      location; //当前location的名字 location xxx {} 中的xxx
+
+    //proxy_pass  http://10.10.0.103:8080/tttxx; 中的http://10.10.0.103:8080/tttxx
+    ngx_str_t                      url; //proxy_pass url名字，见ngx_http_proxy_pass
+
+#if (NGX_HTTP_CACHE)
+    ngx_http_complex_value_t       cache_key;//proxy_cache_key为缓存建立索引时使用的关键字；见ngx_http_proxy_cache_key
+#endif
+
+    ngx_http_proxy_vars_t          vars;//里面保存proxy_pass uri中的uri信息
+    //默认1
+    ngx_flag_t                     redirect;//和配置proxy_redirect相关，见ngx_http_proxy_redirect
+    //proxy_http_version设置，
+    ngx_uint_t                     http_version; //到后端服务器采用的http协议版本，默认NGX_HTTP_VERSION_10
+
+    ngx_uint_t                     headers_hash_max_size;
+    ngx_uint_t                     headers_hash_bucket_size;
+
+#if (NGX_HTTP_SSL)
+    ngx_uint_t                     ssl;
+    ngx_uint_t                     ssl_protocols;
+    ngx_str_t                      ssl_ciphers;
+    ngx_uint_t                     ssl_verify_depth;
+    ngx_str_t                      ssl_trusted_certificate;
+    ngx_str_t                      ssl_crl;
+    ngx_str_t                      ssl_certificate;
+    ngx_str_t                      ssl_certificate_key;
+    ngx_array_t                   *ssl_passwords;
+#endif
+} ngx_http_proxy_loc_conf_t;
+
+extern ngx_module_t  ngx_http_proxy_module;
 
 #endif /* _NGX_HTTP_H_INCLUDED_ */
