@@ -4226,7 +4226,10 @@ ngx_http_subrequest(ngx_http_request_t *r,
 
     *psr = sr;
 
-    return ngx_http_post_request(sr, NULL); /* ngx_http_post_request将该子请求挂载在主请求的posted_requests链表队尾 */
+    ngx_int_t ret = ngx_http_post_request(sr, NULL); /* ngx_http_post_request将该子请求挂载在主请求的posted_requests链表队尾 */
+
+    ngx_int_t a = r->postponed->request == r->posted_requests->request;
+    return ret;
 }
 
 // 内部重定向是从NGX_HTTP_SERVER_REWRITE_PHASE处继续执行(ngx_http_internal_redirect)，而重新rewrite是从NGX_HTTP_FIND_CONFIG_PHASE处执行(ngx_http_core_post_rewrite_phase)

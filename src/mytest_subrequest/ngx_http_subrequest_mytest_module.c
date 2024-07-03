@@ -117,7 +117,7 @@ mytest_post_handler(ngx_http_request_t *r)
 
     // 定义发给用户的http包体内容，格式为：
     // stock[…],Today current price: …, volumn: …
-    ngx_str_t output_format = ngx_string("<meta charset='utf8' />stock[%V],Today current price: %V, volumn: %V");
+    ngx_str_t output_format = ngx_string("<meta charset='utf8' />stock[%V],Today current price: %V, volumn: %V\n");
 
     // 计算待发送包体的长度
     int bodylen = output_format.len + myctx->stock[0].len + myctx->stock[1].len + myctx->stock[4].len - 6;
@@ -164,10 +164,19 @@ ngx_http_subrequest_mytest(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     return NGX_CONF_OK;
 }
-
+static void
+ngx_http_echo_post_read_request_body(ngx_http_request_t *r)
+{
+    ngx_http_request_t *rr = r;
+    // ngx_http_finalize_request(r, NGX_HTTP_CONFLICT);
+    // r->main->count--;
+}
 static ngx_int_t
 ngx_http_subrequest_mytest_handler(ngx_http_request_t *r)
 {
+
+    // ngx_http_read_client_request_body(r, ngx_http_echo_post_read_request_body);
+    ngx_http_discard_request_body(r);
     // 创建http上下文
     ngx_http_subrequest_mytest_ctx_t *myctx = ngx_http_get_module_ctx(r, ngx_http_subrequest_mytest_module);
     if (myctx == NULL)
