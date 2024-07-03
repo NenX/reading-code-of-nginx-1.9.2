@@ -4,14 +4,13 @@
  * Copyright (C) Nginx, Inc.
  */
 
-
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_event.h>
 
 /*
 tcp_nopush
-¹Ù·½:
+å®˜æ–¹:
 
 tcp_nopush
 
@@ -27,88 +26,88 @@ location
 
 Reference: tcp_nopush
 
- 
+
 
 This directive permits or forbids the use of thesocket options TCP_NOPUSH on FreeBSD or TCP_CORK on Linux. This option is onlyavailable when using sendfile.
 
-Setting this option causes nginx to attempt to sendit¡¯s HTTP response headers in one packet on Linux and FreeBSD 4.x
+Setting this option causes nginx to attempt to senditâ€™s HTTP response headers in one packet on Linux and FreeBSD 4.x
 
 You can read more about the TCP_NOPUSH and TCP_CORKsocket options here.
 
- 
-
-linux ÏÂÊÇtcp_cork,ÉÏÃæµÄÒâË¼¾ÍÊÇËµ£¬µ±Ê¹ÓÃsendfileº¯ÊıÊ±£¬tcp_nopush²ÅÆğ×÷ÓÃ£¬ËüºÍÖ¸Áîtcp_nodelayÊÇ»¥³âµÄ¡£tcp_corkÊÇlinuxÏÂtcp/ip´«ÊäµÄÒ»¸ö±ê×¼ÁË£¬Õâ¸ö±ê×¼µÄ´ó¸ÅµÄÒâË¼ÊÇ£¬Ò»°ãÇé¿öÏÂ£¬ÔÚtcp½»»¥µÄ¹ı³ÌÖĞ£¬µ±Ó¦ÓÃ³ÌĞò½ÓÊÕµ½Êı¾İ°üºóÂíÉÏ´«ËÍ³öÈ¥£¬²»µÈ´ı£¬¶øtcp_corkÑ¡ÏîÊÇÊı¾İ°ü²»»áÂíÉÏ´«ËÍ³öÈ¥£¬µÈµ½Êı¾İ°ü×î´óÊ±£¬Ò»´ÎĞÔµÄ´«Êä³öÈ¥£¬ÕâÑùÓĞÖúÓÚ½â¾öÍøÂç¶ÂÈû£¬ÒÑ¾­ÊÇÄ¬ÈÏÁË¡£
-
-Ò²¾ÍÊÇËµtcp_nopush = on »áÉèÖÃµ÷ÓÃtcp_cork·½·¨£¬Õâ¸öÒ²ÊÇÄ¬ÈÏµÄ£¬½á¹û¾ÍÊÇÊı¾İ°ü²»»áÂíÉÏ´«ËÍ³öÈ¥£¬µÈµ½Êı¾İ°ü×î´óÊ±£¬Ò»´ÎĞÔµÄ´«Êä³öÈ¥£¬ÕâÑùÓĞÖúÓÚ½â¾öÍøÂç¶ÂÈû¡£
 
 
-ÒÔ¿ìµİÍ¶µİ¾ÙÀıËµÃ÷Ò»ÏÂ£¨ÒÔÏÂÊÇÎÒµÄÀí½â£¬Ò²ĞíÊÇ²»ÕıÈ·µÄ£©£¬µ±¿ìµİ¶«Î÷Ê±£¬¿ìµİÔ±ÊÕµ½Ò»¸ö°ü¹ü£¬ÂíÉÏÍ¶µİ£¬ÕâÑù±£Ö¤ÁË¼´Ê±ĞÔ£¬µ«ÊÇ»áºÄ·Ñ´óÁ¿µÄÈËÁ¦ÎïÁ¦£¬ÔÚÍøÂçÉÏ±íÏÖ¾ÍÊÇ»áÒıÆğÍøÂç¶ÂÈû£¬¶øµ±¿ìµİÊÕµ½Ò»¸ö°ü¹ü£¬°Ñ°ü¹ü·Åµ½¼¯É¢µØ£¬µÈÒ»¶¨ÊıÁ¿ºóÍ³Ò»Í¶µİ£¬ÕâÑù¾ÍÊÇtcp_corkµÄÑ¡Ïî¸ÉµÄÊÂÇé£¬ÕâÑùµÄ»°£¬»á×î´ó»¯µÄÀûÓÃÍøÂç×ÊÔ´£¬ËäÈ»ÓĞÒ»µãµãÑÓ³Ù¡£
+linux ä¸‹æ˜¯tcp_cork,ä¸Šé¢çš„æ„æ€å°±æ˜¯è¯´ï¼Œå½“ä½¿ç”¨sendfileå‡½æ•°æ—¶ï¼Œtcp_nopushæ‰èµ·ä½œç”¨ï¼Œå®ƒå’ŒæŒ‡ä»¤tcp_nodelayæ˜¯äº’æ–¥çš„ã€‚tcp_corkæ˜¯linuxä¸‹tcp/ipä¼ è¾“çš„ä¸€ä¸ªæ ‡å‡†äº†ï¼Œè¿™ä¸ªæ ‡å‡†çš„å¤§æ¦‚çš„æ„æ€æ˜¯ï¼Œä¸€èˆ¬æƒ…å†µä¸‹ï¼Œåœ¨tcpäº¤äº’çš„è¿‡ç¨‹ä¸­ï¼Œå½“åº”ç”¨ç¨‹åºæ¥æ”¶åˆ°æ•°æ®åŒ…åé©¬ä¸Šä¼ é€å‡ºå»ï¼Œä¸ç­‰å¾…ï¼Œè€Œtcp_corké€‰é¡¹æ˜¯æ•°æ®åŒ…ä¸ä¼šé©¬ä¸Šä¼ é€å‡ºå»ï¼Œç­‰åˆ°æ•°æ®åŒ…æœ€å¤§æ—¶ï¼Œä¸€æ¬¡æ€§çš„ä¼ è¾“å‡ºå»ï¼Œè¿™æ ·æœ‰åŠ©äºè§£å†³ç½‘ç»œå µå¡ï¼Œå·²ç»æ˜¯é»˜è®¤äº†ã€‚
 
-¶ÔÓÚnginxÅäÖÃÎÄ¼şÖĞµÄtcp_nopush£¬Ä¬ÈÏ¾ÍÊÇtcp_nopush,²»ĞèÒªÌØ±ğÖ¸¶¨£¬Õâ¸öÑ¡Ïî¶ÔÓÚwww£¬ftpµÈ´óÎÄ¼şºÜÓĞ°ïÖú
+ä¹Ÿå°±æ˜¯è¯´tcp_nopush = on ä¼šè®¾ç½®è°ƒç”¨tcp_corkæ–¹æ³•ï¼Œè¿™ä¸ªä¹Ÿæ˜¯é»˜è®¤çš„ï¼Œç»“æœå°±æ˜¯æ•°æ®åŒ…ä¸ä¼šé©¬ä¸Šä¼ é€å‡ºå»ï¼Œç­‰åˆ°æ•°æ®åŒ…æœ€å¤§æ—¶ï¼Œä¸€æ¬¡æ€§çš„ä¼ è¾“å‡ºå»ï¼Œè¿™æ ·æœ‰åŠ©äºè§£å†³ç½‘ç»œå µå¡ã€‚
 
- 
+
+ä»¥å¿«é€’æŠ•é€’ä¸¾ä¾‹è¯´æ˜ä¸€ä¸‹ï¼ˆä»¥ä¸‹æ˜¯æˆ‘çš„ç†è§£ï¼Œä¹Ÿè®¸æ˜¯ä¸æ­£ç¡®çš„ï¼‰ï¼Œå½“å¿«é€’ä¸œè¥¿æ—¶ï¼Œå¿«é€’å‘˜æ”¶åˆ°ä¸€ä¸ªåŒ…è£¹ï¼Œé©¬ä¸ŠæŠ•é€’ï¼Œè¿™æ ·ä¿è¯äº†å³æ—¶æ€§ï¼Œä½†æ˜¯ä¼šè€—è´¹å¤§é‡çš„äººåŠ›ç‰©åŠ›ï¼Œåœ¨ç½‘ç»œä¸Šè¡¨ç°å°±æ˜¯ä¼šå¼•èµ·ç½‘ç»œå µå¡ï¼Œè€Œå½“å¿«é€’æ”¶åˆ°ä¸€ä¸ªåŒ…è£¹ï¼ŒæŠŠåŒ…è£¹æ”¾åˆ°é›†æ•£åœ°ï¼Œç­‰ä¸€å®šæ•°é‡åç»Ÿä¸€æŠ•é€’ï¼Œè¿™æ ·å°±æ˜¯tcp_corkçš„é€‰é¡¹å¹²çš„äº‹æƒ…ï¼Œè¿™æ ·çš„è¯ï¼Œä¼šæœ€å¤§åŒ–çš„åˆ©ç”¨ç½‘ç»œèµ„æºï¼Œè™½ç„¶æœ‰ä¸€ç‚¹ç‚¹å»¶è¿Ÿã€‚
+
+å¯¹äºnginxé…ç½®æ–‡ä»¶ä¸­çš„tcp_nopushï¼Œé»˜è®¤å°±æ˜¯tcp_nopush,ä¸éœ€è¦ç‰¹åˆ«æŒ‡å®šï¼Œè¿™ä¸ªé€‰é¡¹å¯¹äºwwwï¼Œftpç­‰å¤§æ–‡ä»¶å¾ˆæœ‰å¸®åŠ©
+
+
 
 tcp_nodelay
-        TCP_NODELAYºÍTCP_CORK»ù±¾ÉÏ¿ØÖÆÁË°üµÄ¡°Nagle»¯¡±£¬Nagle»¯ÔÚÕâÀïµÄº¬ÒåÊÇ²ÉÓÃNagleËã·¨°Ñ½ÏĞ¡µÄ°ü×é×°Îª¸ü´óµÄÖ¡¡£ John NagleÊÇNagleËã·¨µÄ·¢Ã÷ÈË£¬ºóÕß¾ÍÊÇÓÃËûµÄÃû×ÖÀ´ÃüÃûµÄ£¬ËûÔÚ1984ÄêÊ×´ÎÓÃÕâÖÖ·½·¨À´³¢ÊÔ½â¾ö¸£ÌØÆû³µ¹«Ë¾µÄÍøÂçÓµÈûÎÊÌâ£¨ÓûÁË½âÏêÇéÇë²Î¿´IETF RFC 896£©¡£Ëû½â¾öµÄÎÊÌâ¾ÍÊÇËùÎ½µÄsilly window syndrome£¬ÖĞÎÄ³Æ¡°ÓŞ´À´°¿ÚÖ¢ºòÈº¡±£¬¾ßÌåº¬ÒåÊÇ£¬ÒòÎªÆÕ±éÖÕ¶ËÓ¦ÓÃ³ÌĞòÃ¿²úÉúÒ»´Î»÷¼ü²Ù×÷¾Í»á·¢ËÍÒ»¸ö°ü£¬¶øµäĞÍÇé¿öÏÂÒ»¸ö°ü»áÓµÓĞÒ»¸ö×Ö½ÚµÄÊı¾İÔØºÉÒÔ¼°40¸ö×Ö½Ú³¤µÄ°üÍ·£¬ÓÚÊÇ²úÉú4000%µÄ¹ıÔØ£¬ºÜÇáÒ×µØ¾ÍÄÜÁîÍøÂç·¢ÉúÓµÈû,¡£ Nagle»¯ºóÀ´³ÉÁËÒ»ÖÖ±ê×¼²¢ÇÒÁ¢¼´ÔÚÒòÌØÍøÉÏµÃÒÔÊµÏÖ¡£ËüÏÖÔÚÒÑ¾­³ÉÎªÈ±Ê¡ÅäÖÃÁË£¬µ«ÔÚÎÒÃÇ¿´À´£¬ÓĞĞ©³¡ºÏÏÂ°ÑÕâÒ»Ñ¡Ïî¹ØµôÒ²ÊÇºÏºõĞèÒªµÄ¡£
+        TCP_NODELAYå’ŒTCP_CORKåŸºæœ¬ä¸Šæ§åˆ¶äº†åŒ…çš„â€œNagleåŒ–â€ï¼ŒNagleåŒ–åœ¨è¿™é‡Œçš„å«ä¹‰æ˜¯é‡‡ç”¨Nagleç®—æ³•æŠŠè¾ƒå°çš„åŒ…ç»„è£…ä¸ºæ›´å¤§çš„å¸§ã€‚ John Nagleæ˜¯Nagleç®—æ³•çš„å‘æ˜äººï¼Œåè€…å°±æ˜¯ç”¨ä»–çš„åå­—æ¥å‘½åçš„ï¼Œä»–åœ¨1984å¹´é¦–æ¬¡ç”¨è¿™ç§æ–¹æ³•æ¥å°è¯•è§£å†³ç¦ç‰¹æ±½è½¦å…¬å¸çš„ç½‘ç»œæ‹¥å¡é—®é¢˜ï¼ˆæ¬²äº†è§£è¯¦æƒ…è¯·å‚çœ‹IETF RFC 896ï¼‰ã€‚ä»–è§£å†³çš„é—®é¢˜å°±æ˜¯æ‰€è°“çš„silly window syndromeï¼Œä¸­æ–‡ç§°â€œæ„šè ¢çª—å£ç—‡å€™ç¾¤â€ï¼Œå…·ä½“å«ä¹‰æ˜¯ï¼Œå› ä¸ºæ™®éç»ˆç«¯åº”ç”¨ç¨‹åºæ¯äº§ç”Ÿä¸€æ¬¡å‡»é”®æ“ä½œå°±ä¼šå‘é€ä¸€ä¸ªåŒ…ï¼Œè€Œå…¸å‹æƒ…å†µä¸‹ä¸€ä¸ªåŒ…ä¼šæ‹¥æœ‰ä¸€ä¸ªå­—èŠ‚çš„æ•°æ®è½½è·ä»¥åŠ40ä¸ªå­—èŠ‚é•¿çš„åŒ…å¤´ï¼Œäºæ˜¯äº§ç”Ÿ4000%çš„è¿‡è½½ï¼Œå¾ˆè½»æ˜“åœ°å°±èƒ½ä»¤ç½‘ç»œå‘ç”Ÿæ‹¥å¡,ã€‚ NagleåŒ–åæ¥æˆäº†ä¸€ç§æ ‡å‡†å¹¶ä¸”ç«‹å³åœ¨å› ç‰¹ç½‘ä¸Šå¾—ä»¥å®ç°ã€‚å®ƒç°åœ¨å·²ç»æˆä¸ºç¼ºçœé…ç½®äº†ï¼Œä½†åœ¨æˆ‘ä»¬çœ‹æ¥ï¼Œæœ‰äº›åœºåˆä¸‹æŠŠè¿™ä¸€é€‰é¡¹å…³æ‰ä¹Ÿæ˜¯åˆä¹éœ€è¦çš„ã€‚
 
-       ÏÖÔÚÈÃÎÒÃÇ¼ÙÉèÄ³¸öÓ¦ÓÃ³ÌĞò·¢³öÁËÒ»¸öÇëÇó£¬Ï£Íû·¢ËÍĞ¡¿éÊı¾İ¡£ÎÒÃÇ¿ÉÒÔÑ¡ÔñÁ¢¼´·¢ËÍÊı¾İ»òÕßµÈ´ı²úÉú¸ü¶àµÄÊı¾İÈ»ºóÔÙÒ»´Î·¢ËÍÁ½ÖÖ²ßÂÔ¡£Èç¹ûÎÒÃÇÂíÉÏ·¢ËÍÊı¾İ£¬ÄÇÃ´½»»¥ĞÔµÄÒÔ¼°¿Í»§/·şÎñÆ÷ĞÍµÄÓ¦ÓÃ³ÌĞò½«¼«´óµØÊÜÒæ¡£Èç¹ûÇëÇóÁ¢¼´·¢³öÄÇÃ´ÏìÓ¦Ê±¼äÒ²»á¿ìÒ»Ğ©¡£ÒÔÉÏ²Ù×÷¿ÉÒÔÍ¨¹ıÉèÖÃÌ×½Ó×ÖµÄTCP_NODELAY = on Ñ¡ÏîÀ´Íê³É£¬ÕâÑù¾Í½ûÓÃÁËNagle Ëã·¨¡£
+       ç°åœ¨è®©æˆ‘ä»¬å‡è®¾æŸä¸ªåº”ç”¨ç¨‹åºå‘å‡ºäº†ä¸€ä¸ªè¯·æ±‚ï¼Œå¸Œæœ›å‘é€å°å—æ•°æ®ã€‚æˆ‘ä»¬å¯ä»¥é€‰æ‹©ç«‹å³å‘é€æ•°æ®æˆ–è€…ç­‰å¾…äº§ç”Ÿæ›´å¤šçš„æ•°æ®ç„¶åå†ä¸€æ¬¡å‘é€ä¸¤ç§ç­–ç•¥ã€‚å¦‚æœæˆ‘ä»¬é©¬ä¸Šå‘é€æ•°æ®ï¼Œé‚£ä¹ˆäº¤äº’æ€§çš„ä»¥åŠå®¢æˆ·/æœåŠ¡å™¨å‹çš„åº”ç”¨ç¨‹åºå°†æå¤§åœ°å—ç›Šã€‚å¦‚æœè¯·æ±‚ç«‹å³å‘å‡ºé‚£ä¹ˆå“åº”æ—¶é—´ä¹Ÿä¼šå¿«ä¸€äº›ã€‚ä»¥ä¸Šæ“ä½œå¯ä»¥é€šè¿‡è®¾ç½®å¥—æ¥å­—çš„TCP_NODELAY = on é€‰é¡¹æ¥å®Œæˆï¼Œè¿™æ ·å°±ç¦ç”¨äº†Nagle ç®—æ³•ã€‚
 
-       ÁíÍâÒ»ÖÖÇé¿öÔòĞèÒªÎÒÃÇµÈµ½Êı¾İÁ¿´ïµ½×î´óÊ±²ÅÍ¨¹ıÍøÂçÒ»´Î·¢ËÍÈ«²¿Êı¾İ£¬ÕâÖÖÊı¾İ´«Êä·½Ê½ÓĞÒæÓÚ´óÁ¿Êı¾İµÄÍ¨ĞÅĞÔÄÜ£¬µäĞÍµÄÓ¦ÓÃ¾ÍÊÇÎÄ¼ş·şÎñÆ÷¡£Ó¦ÓÃ NagleËã·¨ÔÚÕâÖÖÇé¿öÏÂ¾Í»á²úÉúÎÊÌâ¡£µ«ÊÇ£¬Èç¹ûÄãÕıÔÚ·¢ËÍ´óÁ¿Êı¾İ£¬Äã¿ÉÒÔÉèÖÃTCP_CORKÑ¡Ïî½ûÓÃNagle»¯£¬Æä·½Ê½ÕıºÃÍ¬ TCP_NODELAYÏà·´£¨TCP_CORKºÍ TCP_NODELAYÊÇ»¥ÏàÅÅ³âµÄ£©¡£
+       å¦å¤–ä¸€ç§æƒ…å†µåˆ™éœ€è¦æˆ‘ä»¬ç­‰åˆ°æ•°æ®é‡è¾¾åˆ°æœ€å¤§æ—¶æ‰é€šè¿‡ç½‘ç»œä¸€æ¬¡å‘é€å…¨éƒ¨æ•°æ®ï¼Œè¿™ç§æ•°æ®ä¼ è¾“æ–¹å¼æœ‰ç›Šäºå¤§é‡æ•°æ®çš„é€šä¿¡æ€§èƒ½ï¼Œå…¸å‹çš„åº”ç”¨å°±æ˜¯æ–‡ä»¶æœåŠ¡å™¨ã€‚åº”ç”¨ Nagleç®—æ³•åœ¨è¿™ç§æƒ…å†µä¸‹å°±ä¼šäº§ç”Ÿé—®é¢˜ã€‚ä½†æ˜¯ï¼Œå¦‚æœä½ æ­£åœ¨å‘é€å¤§é‡æ•°æ®ï¼Œä½ å¯ä»¥è®¾ç½®TCP_CORKé€‰é¡¹ç¦ç”¨NagleåŒ–ï¼Œå…¶æ–¹å¼æ­£å¥½åŒ TCP_NODELAYç›¸åï¼ˆTCP_CORKå’Œ TCP_NODELAYæ˜¯äº’ç›¸æ’æ–¥çš„ï¼‰ã€‚
 
 
 
 
 endfile
 =================
-nginx µÄ sendfile Ñ¡Ïî¿ÉÒÔÔÚ nginx ·¢ËÍÎÄ¼şÊ±Ê¹ÓÃÏµÍ³µ÷ÓÃ sendfile(2)
+nginx çš„ sendfile é€‰é¡¹å¯ä»¥åœ¨ nginx å‘é€æ–‡ä»¶æ—¶ä½¿ç”¨ç³»ç»Ÿè°ƒç”¨ sendfile(2)
 
 
-sendfile(2) ¿ÉÒÔÔÚ´«ÊäÎÄ¼şÊı¾İÊ±Ê¹ÓÃÄÚºË¿Õ¼äÖĞµÄÒ»Ğ©Êı¾İ¡£ÕâÑù¿ÉÒÔ½ÚÊ¡´óÁ¿µÄ×ÊÔ´£º
-1.sendfile(2) ÊÇÏµÍ³µ÷ÓÃ£¬Õâ¾ÍÒâÎ¶×Å²Ù×÷ÊÇÔÚÄÚºËÖĞÍê³ÉµÄ£¬Òò´ËÃ»ÓĞ°º¹óµÄÉÏÏÂÎÄÇĞ»»×ÊÔ´
-2.sendfile(2) È¡´úÁËÏµÍ³ read ºÍ write ²Ù×÷¡£
-3.sendfile(2) ÔÊĞíÁã¸´ÖÆ£¬Ò²¾ÍÊÇ¿ÉÒÔÖ±½Ó´Ó DMA Ğ´Êı¾İ
+sendfile(2) å¯ä»¥åœ¨ä¼ è¾“æ–‡ä»¶æ•°æ®æ—¶ä½¿ç”¨å†…æ ¸ç©ºé—´ä¸­çš„ä¸€äº›æ•°æ®ã€‚è¿™æ ·å¯ä»¥èŠ‚çœå¤§é‡çš„èµ„æºï¼š
+1.sendfile(2) æ˜¯ç³»ç»Ÿè°ƒç”¨ï¼Œè¿™å°±æ„å‘³ç€æ“ä½œæ˜¯åœ¨å†…æ ¸ä¸­å®Œæˆçš„ï¼Œå› æ­¤æ²¡æœ‰æ˜‚è´µçš„ä¸Šä¸‹æ–‡åˆ‡æ¢èµ„æº
+2.sendfile(2) å–ä»£äº†ç³»ç»Ÿ read å’Œ write æ“ä½œã€‚
+3.sendfile(2) å…è®¸é›¶å¤åˆ¶ï¼Œä¹Ÿå°±æ˜¯å¯ä»¥ç›´æ¥ä» DMA å†™æ•°æ®
 
 
-ÏÈÀ´¿´Ò»ÏÂ²»ÓÃ sendfile µÄ´«Í³ÍøÂç´«Êä¹ı³Ì£º
+å…ˆæ¥çœ‹ä¸€ä¸‹ä¸ç”¨ sendfile çš„ä¼ ç»Ÿç½‘ç»œä¼ è¾“è¿‡ç¨‹ï¼š
 
 
 read(file, tmp_buf, len);
 write(socket, tmp_buf, len);
 
 
-Ó²ÅÌ >> kernel buffer >> user buffer >> kernel socket buffer >> Ğ­ÒéÕ»
+ç¡¬ç›˜ >> kernel buffer >> user buffer >> kernel socket buffer >> åè®®æ ˆ
 
 
-Ò»°ãÀ´ËµÒ»¸öÍøÂçÓ¦ÓÃÊÇÍ¨¹ı¶ÁÓ²ÅÌÊı¾İ£¬È»ºóĞ´Êı¾İµ½ socket À´Íê³ÉÍøÂç´«ÊäµÄ¡£
-¾ßÌå¹ı³ÌÊÇ£º
+ä¸€èˆ¬æ¥è¯´ä¸€ä¸ªç½‘ç»œåº”ç”¨æ˜¯é€šè¿‡è¯»ç¡¬ç›˜æ•°æ®ï¼Œç„¶åå†™æ•°æ®åˆ° socket æ¥å®Œæˆç½‘ç»œä¼ è¾“çš„ã€‚
+å…·ä½“è¿‡ç¨‹æ˜¯ï¼š
 
 
-1¡¢ÏµÍ³µ÷ÓÃ read() ²úÉúÒ»¸öÉÏÏÂÎÄÇĞ»»£º´Ó user mode ÇĞ»»µ½ kernel mode£¬È»ºó DMA Ö´ĞĞ¿½±´£¬°ÑÎÄ¼şÊı¾İ´ÓÓ²ÅÌ¶Áµ½Ò»¸ö kernel buffer Àï¡£
-2¡¢Êı¾İ´Ó kernel buffer ¿½±´µ½ user buffer£¬È»ºóÏµÍ³µ÷ÓÃ read() ·µ»Ø£¬ÕâÊ±ÓÖ²úÉúÒ»¸öÉÏÏÂÎÄÇĞ»»£º´Ókernel mode ÇĞ»»µ½ user mode¡£
-3¡¢ÏµÍ³µ÷ÓÃ write() ²úÉúÒ»¸öÉÏÏÂÎÄÇĞ»»£º´Ó user mode ÇĞ»»µ½ kernel mode£¬È»ºó°Ñ²½Öè2¶Áµ½ user buffer µÄÊı¾İ¿½±´µ½ kernel buffer£¨Êı¾İµÚ2´Î¿½±´µ½ kernel buffer£©£¬²»¹ıÕâ´ÎÊÇ¸ö²»Í¬µÄ kernel buffer£¬Õâ¸ö buffer ºÍ socket Ïà¹ØÁª¡£
-4¡¢ÏµÍ³µ÷ÓÃ write() ·µ»Ø£¬²úÉúÒ»¸öÉÏÏÂÎÄÇĞ»»£º´Ó kernel mode ÇĞ»»µ½ user mode£¨µÚ4´ÎÇĞ»»ÁË£©£¬È»ºó DMA ´Ó kernel buffer ¿½±´Êı¾İµ½Ğ­ÒéÕ»£¨µÚ4´Î¿½±´ÁË£©¡£
+1ã€ç³»ç»Ÿè°ƒç”¨ read() äº§ç”Ÿä¸€ä¸ªä¸Šä¸‹æ–‡åˆ‡æ¢ï¼šä» user mode åˆ‡æ¢åˆ° kernel modeï¼Œç„¶å DMA æ‰§è¡Œæ‹·è´ï¼ŒæŠŠæ–‡ä»¶æ•°æ®ä»ç¡¬ç›˜è¯»åˆ°ä¸€ä¸ª kernel buffer é‡Œã€‚
+2ã€æ•°æ®ä» kernel buffer æ‹·è´åˆ° user bufferï¼Œç„¶åç³»ç»Ÿè°ƒç”¨ read() è¿”å›ï¼Œè¿™æ—¶åˆäº§ç”Ÿä¸€ä¸ªä¸Šä¸‹æ–‡åˆ‡æ¢ï¼šä»kernel mode åˆ‡æ¢åˆ° user modeã€‚
+3ã€ç³»ç»Ÿè°ƒç”¨ write() äº§ç”Ÿä¸€ä¸ªä¸Šä¸‹æ–‡åˆ‡æ¢ï¼šä» user mode åˆ‡æ¢åˆ° kernel modeï¼Œç„¶åæŠŠæ­¥éª¤2è¯»åˆ° user buffer çš„æ•°æ®æ‹·è´åˆ° kernel bufferï¼ˆæ•°æ®ç¬¬2æ¬¡æ‹·è´åˆ° kernel bufferï¼‰ï¼Œä¸è¿‡è¿™æ¬¡æ˜¯ä¸ªä¸åŒçš„ kernel bufferï¼Œè¿™ä¸ª buffer å’Œ socket ç›¸å…³è”ã€‚
+4ã€ç³»ç»Ÿè°ƒç”¨ write() è¿”å›ï¼Œäº§ç”Ÿä¸€ä¸ªä¸Šä¸‹æ–‡åˆ‡æ¢ï¼šä» kernel mode åˆ‡æ¢åˆ° user modeï¼ˆç¬¬4æ¬¡åˆ‡æ¢äº†ï¼‰ï¼Œç„¶å DMA ä» kernel buffer æ‹·è´æ•°æ®åˆ°åè®®æ ˆï¼ˆç¬¬4æ¬¡æ‹·è´äº†ï¼‰ã€‚
 
 
-ÉÏÃæ4¸ö²½ÖèÓĞ4´ÎÉÏÏÂÎÄÇĞ»»£¬ÓĞ4´Î¿½±´£¬ÔÚkernel 2.0+ °æ±¾ÖĞ£¬ÏµÍ³µ÷ÓÃ sendfile() ¾ÍÊÇÓÃÀ´¼ò»¯ÉÏÃæ²½ÖèÌáÉıĞÔÄÜµÄ¡£
-sendfile() ²»µ«ÄÜ¼õÉÙÇĞ»»´ÎÊı¶øÇÒ»¹ÄÜ¼õÉÙ¿½±´´ÎÊı¡£
+ä¸Šé¢4ä¸ªæ­¥éª¤æœ‰4æ¬¡ä¸Šä¸‹æ–‡åˆ‡æ¢ï¼Œæœ‰4æ¬¡æ‹·è´ï¼Œåœ¨kernel 2.0+ ç‰ˆæœ¬ä¸­ï¼Œç³»ç»Ÿè°ƒç”¨ sendfile() å°±æ˜¯ç”¨æ¥ç®€åŒ–ä¸Šé¢æ­¥éª¤æå‡æ€§èƒ½çš„ã€‚
+sendfile() ä¸ä½†èƒ½å‡å°‘åˆ‡æ¢æ¬¡æ•°è€Œä¸”è¿˜èƒ½å‡å°‘æ‹·è´æ¬¡æ•°ã€‚
 
 
 ------------------------------
-ÔÙÀ´¿´Ò»ÏÂÓÃ sendfile() À´½øĞĞÍøÂç´«ÊäµÄ¹ı³Ì£º
+å†æ¥çœ‹ä¸€ä¸‹ç”¨ sendfile() æ¥è¿›è¡Œç½‘ç»œä¼ è¾“çš„è¿‡ç¨‹ï¼š
 
 
 sendfile(socket, file, len);
 
 
-Ó²ÅÌ >> kernel buffer (¿ìËÙ¿½±´µ½kernel socket buffer) >> Ğ­ÒéÕ»
+ç¡¬ç›˜ >> kernel buffer (å¿«é€Ÿæ‹·è´åˆ°kernel socket buffer) >> åè®®æ ˆ
 
 
-1¡¢ÏµÍ³µ÷ÓÃ sendfile() Í¨¹ı DMA °ÑÓ²ÅÌÊı¾İ¿½±´µ½ kernel buffer£¬È»ºóÊı¾İ±» kernel Ö±½Ó¿½±´µ½ÁíÍâÒ»¸öÓë socket Ïà¹ØµÄ kernel buffer¡£ÕâÀïÃ»ÓĞ user mode ºÍ kernel mode Ö®¼äµÄÇĞ»»£¬ÔÚ kernel ÖĞÖ±½ÓÍê³ÉÁË´ÓÒ»¸ö buffer µ½ÁíÒ»¸ö buffer µÄ¿½±´¡£
-2¡¢DMA °ÑÊı¾İ´Ó kernel buffer Ö±½Ó¿½±´¸øĞ­ÒéÕ»£¬Ã»ÓĞÇĞ»»£¬Ò²²»ĞèÒªÊı¾İ´Ó user mode ¿½±´µ½ kernel mode£¬ÒòÎªÊı¾İ¾ÍÔÚ kernel Àï¡£
+1ã€ç³»ç»Ÿè°ƒç”¨ sendfile() é€šè¿‡ DMA æŠŠç¡¬ç›˜æ•°æ®æ‹·è´åˆ° kernel bufferï¼Œç„¶åæ•°æ®è¢« kernel ç›´æ¥æ‹·è´åˆ°å¦å¤–ä¸€ä¸ªä¸ socket ç›¸å…³çš„ kernel bufferã€‚è¿™é‡Œæ²¡æœ‰ user mode å’Œ kernel mode ä¹‹é—´çš„åˆ‡æ¢ï¼Œåœ¨ kernel ä¸­ç›´æ¥å®Œæˆäº†ä»ä¸€ä¸ª buffer åˆ°å¦ä¸€ä¸ª buffer çš„æ‹·è´ã€‚
+2ã€DMA æŠŠæ•°æ®ä» kernel buffer ç›´æ¥æ‹·è´ç»™åè®®æ ˆï¼Œæ²¡æœ‰åˆ‡æ¢ï¼Œä¹Ÿä¸éœ€è¦æ•°æ®ä» user mode æ‹·è´åˆ° kernel modeï¼Œå› ä¸ºæ•°æ®å°±åœ¨ kernel é‡Œã€‚
 
 */
 static ssize_t ngx_linux_sendfile(ngx_connection_t *c, ngx_buf_t *file,
-    size_t size);
+                                  size_t size);
 
 #if (NGX_THREADS)
 #include <ngx_thread_pool.h>
@@ -118,10 +117,9 @@ static ssize_t ngx_linux_sendfile(ngx_connection_t *c, ngx_buf_t *file,
 #endif
 
 static ngx_int_t ngx_linux_sendfile_thread(ngx_connection_t *c, ngx_buf_t *file,
-    size_t size, size_t *sent);
+                                           size_t size, size_t *sent);
 static void ngx_linux_sendfile_thread_handler(void *data, ngx_log_t *log);
 #endif
-
 
 /*
  * On Linux up to 2.4.21 sendfile() (syscall #187) works with 32-bit
@@ -137,11 +135,10 @@ static void ngx_linux_sendfile_thread_handler(void *data, ngx_log_t *log);
  * so we limit it to 2G-1 bytes.
  */
 
-#define NGX_SENDFILE_MAXSIZE  2147483647L
-
+#define NGX_SENDFILE_MAXSIZE 2147483647L
 
 /*
-Ïòºó¶ËµÄÊı¾İ·¢ËÍ£¬²»»á¾­¹ı¸÷¸öfilterÄ£¿é£¬Ïò¿Í»§¶ËµÄ°üÌåÏìÓ¦»á¾­¹ı¸÷¸öfilterÄ£¿é
+å‘åç«¯çš„æ•°æ®å‘é€ï¼Œä¸ä¼šç»è¿‡å„ä¸ªfilteræ¨¡å—ï¼Œå‘å®¢æˆ·ç«¯çš„åŒ…ä½“å“åº”ä¼šç»è¿‡å„ä¸ªfilteræ¨¡å—
 2016/01/05 21:02:43[           ngx_event_process_posted,    67]  [debug] 23495#23495: *1 delete posted event AEA04098
 2016/01/05 21:02:43[          ngx_http_upstream_handler,  1400]  [debug] 23495#23495: *1 http upstream request(ev->write:1): "/test2.php?"
 2016/01/05 21:02:43[ngx_http_upstream_send_request_handler,  2420]  [debug] 23495#23495: *1 http upstream send request handler
@@ -156,7 +153,7 @@ static void ngx_linux_sendfile_thread_handler(void *data, ngx_log_t *log);
 2016/01/05 21:02:43[                   ngx_chain_writer,   801]  [debug] 23495#23495: *1 chain writer out: 00000000
 
 
-Ïòºó¶ËµÄÊı¾İ·¢ËÍ£¬²»»á¾­¹ı¸÷¸öfilterÄ£¿é£¬Ïò¿Í»§¶ËµÄ°üÌåÏìÓ¦»á¾­¹ı¸÷¸öfilterÄ£¿é
+å‘åç«¯çš„æ•°æ®å‘é€ï¼Œä¸ä¼šç»è¿‡å„ä¸ªfilteræ¨¡å—ï¼Œå‘å®¢æˆ·ç«¯çš„åŒ…ä½“å“åº”ä¼šç»è¿‡å„ä¸ªfilteræ¨¡å—
 2016/01/05 21:02:43[ ngx_event_pipe_write_to_downstream,   623]  [debug] 23495#23495: *1 pipe write downstream flush out
 2016/01/05 21:02:43[             ngx_http_output_filter,  3338]  [debug] 23495#23495: *1 http output filter "/test2.php?"
 2016/01/05 21:02:43[               ngx_http_copy_filter,   199]  [debug] 23495#23495: *1 http copy filter: "/test2.php?", r->aio:0
@@ -179,45 +176,47 @@ static void ngx_linux_sendfile_thread_handler(void *data, ngx_log_t *log);
 
 */
 
-//ngx_linux_io
-ngx_chain_t * //Ö»ÒªÖ§³Ösendfile£¬²»¹ÜÅãÃ»ÓĞÅäÖÃsendfile on¶¼»á×ßµ½¸Ãº¯ÊıÖĞ£¬³ı·Ç¿ªÆôÁËÒì²½aio
+// ngx_linux_io
+ngx_chain_t * // åªè¦æ”¯æŒsendfileï¼Œä¸ç®¡é™ªæ²¡æœ‰é…ç½®sendfile onéƒ½ä¼šèµ°åˆ°è¯¥å‡½æ•°ä¸­ï¼Œé™¤éå¼€å¯äº†å¼‚æ­¥aio
 ngx_linux_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
-{ //Ïòºó¶ËµÄÊı¾İ·¢ËÍ£¬²»»á¾­¹ı¸÷¸öfilterÄ£¿é£¬Ïò¿Í»§¶ËµÄ°üÌåÏìÓ¦»á¾­¹ı¸÷¸öfilterÄ£¿é
-    int            tcp_nodelay;
-    off_t          send, prev_send;
-    size_t         file_size, sent;
-    ssize_t        n;
-    ngx_err_t      err;
-    ngx_buf_t     *file;
-    ngx_event_t   *wev;
-    ngx_chain_t   *cl;
-    ngx_iovec_t    header;
-    struct iovec   headers[NGX_IOVS_PREALLOCATE];
+{ // å‘åç«¯çš„æ•°æ®å‘é€ï¼Œä¸ä¼šç»è¿‡å„ä¸ªfilteræ¨¡å—ï¼Œå‘å®¢æˆ·ç«¯çš„åŒ…ä½“å“åº”ä¼šç»è¿‡å„ä¸ªfilteræ¨¡å—
+    int tcp_nodelay;
+    off_t send, prev_send;
+    size_t file_size, sent;
+    ssize_t n;
+    ngx_err_t err;
+    ngx_buf_t *file;
+    ngx_event_t *wev;
+    ngx_chain_t *cl;
+    ngx_iovec_t header;
+    struct iovec headers[NGX_IOVS_PREALLOCATE];
 #if (NGX_THREADS)
-    ngx_int_t      rc;
-    ngx_uint_t     thread_handled, thread_complete;
+    ngx_int_t rc;
+    ngx_uint_t thread_handled, thread_complete;
 #endif
 
     ngx_log_debugall(c->log, 0, "@@@@@@@@@@@@@@@@@@@@@@@begin ngx_linux_sendfile_chain @@@@@@@@@@@@@@@@@@@");
     wev = c->write;
 
-    if (!wev->ready) {
+    if (!wev->ready)
+    {
         return in;
     }
 
     /* the maximum limit size is 2G-1 - the page size */
 
-    if (limit == 0 || limit > (off_t) (NGX_SENDFILE_MAXSIZE - ngx_pagesize)) {
+    if (limit == 0 || limit > (off_t)(NGX_SENDFILE_MAXSIZE - ngx_pagesize))
+    {
         limit = NGX_SENDFILE_MAXSIZE - ngx_pagesize;
     }
-
 
     send = 0;
 
     header.iovs = headers;
     header.nalloc = NGX_IOVS_PREALLOCATE;
 
-    for ( ;; ) {
+    for (;;)
+    {
         prev_send = send;
 #if (NGX_THREADS)
         thread_handled = 0;
@@ -225,30 +224,30 @@ ngx_linux_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
 #endif
 
         /* create the iovec and coalesce the neighbouring bufs */
-        //°ÑinÁ´ÖĞµÄbuf¿½±´µ½vec->iovs[n++]ÖĞ£¬×¢ÒâÖ»»á¿½±´ÄÚ´æÖĞµÄÊı¾İµ½iovecÖĞ£¬²»»á¿½±´ÎÄ¼şÖĞµÄ
+        // æŠŠiné“¾ä¸­çš„bufæ‹·è´åˆ°vec->iovs[n++]ä¸­ï¼Œæ³¨æ„åªä¼šæ‹·è´å†…å­˜ä¸­çš„æ•°æ®åˆ°iovecä¸­ï¼Œä¸ä¼šæ‹·è´æ–‡ä»¶ä¸­çš„
         cl = ngx_output_chain_to_iovec(&header, in, limit - send, c->log);
 
-        if (cl == NGX_CHAIN_ERROR) {
+        if (cl == NGX_CHAIN_ERROR)
+        {
             return NGX_CHAIN_ERROR;
         }
 
-        send += header.size; //inÖĞËùÓĞÊı¾İsizeÖ®ºÍ
+        send += header.size; // inä¸­æ‰€æœ‰æ•°æ®sizeä¹‹å’Œ
 
         /* set TCP_CORK if there is a header before a file */
 
-        if (c->tcp_nopush == NGX_TCP_NOPUSH_UNSET
-            && header.count != 0 //µÈÓÚ0£¬Ôò±íÃ÷chainÁ´ÖĞµÄËùÓĞÊı¾İÔÚÎÄ¼şÖĞ
-            && cl
-            && cl->buf->in_file)
+        if (c->tcp_nopush == NGX_TCP_NOPUSH_UNSET && header.count != 0 // ç­‰äº0ï¼Œåˆ™è¡¨æ˜chainé“¾ä¸­çš„æ‰€æœ‰æ•°æ®åœ¨æ–‡ä»¶ä¸­
+            && cl && cl->buf->in_file)
         {
             /* the TCP_CORK and TCP_NODELAY are mutually exclusive */
 
-            if (c->tcp_nodelay == NGX_TCP_NODELAY_SET) {
+            if (c->tcp_nodelay == NGX_TCP_NODELAY_SET)
+            {
 
                 tcp_nodelay = 0;
 
                 if (setsockopt(c->fd, IPPROTO_TCP, TCP_NODELAY,
-                               (const void *) &tcp_nodelay, sizeof(int)) == -1)
+                               (const void *)&tcp_nodelay, sizeof(int)) == -1)
                 {
                     err = ngx_socket_errno;
 
@@ -258,14 +257,16 @@ ngx_linux_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
                      * and without the TCP_CORK
                      */
 
-                    if (err != NGX_EINTR) {
+                    if (err != NGX_EINTR)
+                    {
                         wev->error = 1;
                         ngx_connection_error(c, err,
                                              "setsockopt(TCP_NODELAY) failed");
                         return NGX_CHAIN_ERROR;
                     }
-
-                } else {
+                }
+                else
+                {
                     c->tcp_nodelay = NGX_TCP_NODELAY_UNSET;
 
                     ngx_log_debug0(NGX_LOG_DEBUG_EVENT, c->log, 0,
@@ -273,9 +274,11 @@ ngx_linux_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
                 }
             }
 
-            if (c->tcp_nodelay == NGX_TCP_NODELAY_UNSET) {
+            if (c->tcp_nodelay == NGX_TCP_NODELAY_UNSET)
+            {
 
-                if (ngx_tcp_nopush(c->fd) == NGX_ERROR) {
+                if (ngx_tcp_nopush(c->fd) == NGX_ERROR)
+                {
                     err = ngx_socket_errno;
 
                     /*
@@ -283,14 +286,16 @@ ngx_linux_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
                      * we continue a processing without the TCP_CORK
                      */
 
-                    if (err != NGX_EINTR) {
+                    if (err != NGX_EINTR)
+                    {
                         wev->error = 1;
                         ngx_connection_error(c, err,
                                              ngx_tcp_nopush_n " failed");
                         return NGX_CHAIN_ERROR;
                     }
-
-                } else {
+                }
+                else
+                {
                     c->tcp_nopush = NGX_TCP_NOPUSH_SET;
 
                     ngx_log_debug0(NGX_LOG_DEBUG_EVENT, c->log, 0,
@@ -300,31 +305,35 @@ ngx_linux_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
         }
 
         /* get the file buf */
-        //=0µÈÓÚ0£¬Ôò±íÃ÷chainÁ´ÖĞµÄËùÓĞÊı¾İÔÚÎÄ¼şÖĞ£¬Ò»°ãsendfile onµÄÊ±ºò×ßÕâÀï
+        //=0ç­‰äº0ï¼Œåˆ™è¡¨æ˜chainé“¾ä¸­çš„æ‰€æœ‰æ•°æ®åœ¨æ–‡ä»¶ä¸­ï¼Œä¸€èˆ¬sendfile onçš„æ—¶å€™èµ°è¿™é‡Œ
         /*
-         ËµÃ÷chainÖĞµÄÊı¾İÊÇin_fileµÄ£¬Ò²¾ÍÊÇÔÚ»º´æÎÄ¼şÖĞ£¬Ò»°ã¿ªÆôsendfile onµÄÊ±ºò×ßÕâÀï,ÒòÎªngx_output_chain_as_is·µ»Ø1£¬²»»áÖØĞÂ¿ª±ÙÄÚ´æ¿Õ¼ä¶ÁÈ¡»º´æÄÚÈİ¡£
-         in_fileÖĞµÄÄÚ´æ»¹ÊÇin_fileµÄ£¬¶ø²»»á¿½±´µ½ĞÂ·ÖÅäµÄÄÚ´æÖĞ£¬ ²Î¿¼ngx_http_copy_filter->ngx_output_chain   ngx_output_chain_as_isµÈ
+         è¯´æ˜chainä¸­çš„æ•°æ®æ˜¯in_fileçš„ï¼Œä¹Ÿå°±æ˜¯åœ¨ç¼“å­˜æ–‡ä»¶ä¸­ï¼Œä¸€èˆ¬å¼€å¯sendfile onçš„æ—¶å€™èµ°è¿™é‡Œ,å› ä¸ºngx_output_chain_as_isè¿”å›1ï¼Œä¸ä¼šé‡æ–°å¼€è¾Ÿå†…å­˜ç©ºé—´è¯»å–ç¼“å­˜å†…å®¹ã€‚
+         in_fileä¸­çš„å†…å­˜è¿˜æ˜¯in_fileçš„ï¼Œè€Œä¸ä¼šæ‹·è´åˆ°æ–°åˆ†é…çš„å†…å­˜ä¸­ï¼Œ å‚è€ƒngx_http_copy_filter->ngx_output_chain   ngx_output_chain_as_isç­‰
             */
-        if (header.count == 0 && cl && cl->buf->in_file && send < limit) {
+        if (header.count == 0 && cl && cl->buf->in_file && send < limit)
+        {
             file = cl->buf;
 
             /* coalesce the neighbouring file bufs */
 
-            file_size = (size_t) ngx_chain_coalesce_file(&cl, limit - send);
+            file_size = (size_t)ngx_chain_coalesce_file(&cl, limit - send);
 
             send += file_size;
 #if 1
-            if (file_size == 0) {
+            if (file_size == 0)
+            {
                 ngx_debug_point();
                 return NGX_CHAIN_ERROR;
             }
 #endif
 
 #if (NGX_THREADS)
-            if (file->file->thread_handler) {
+            if (file->file->thread_handler)
+            {
                 rc = ngx_linux_sendfile_thread(c, file, file_size, &sent);
 
-                switch (rc) {
+                switch (rc)
+                {
                 case NGX_OK:
                     thread_handled = 1;
                     break;
@@ -339,26 +348,30 @@ ngx_linux_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
                 default: /* NGX_ERROR */
                     return NGX_CHAIN_ERROR;
                 }
-
-            } else
+            }
+            else
 #endif
             {
                 n = ngx_linux_sendfile(c, file, file_size);
 
-                if (n == NGX_ERROR) {
+                if (n == NGX_ERROR)
+                {
                     return NGX_CHAIN_ERROR;
                 }
 
                 sent = (n == NGX_AGAIN) ? 0 : n;
             }
+        }
+        else
+        {
+            /*
+            è¯´æ˜chainä¸­çš„æ•°æ®åœ¨å†…å­˜ä¸­ï¼Œä¸€èˆ¬ä¸å¼€å¯sendfile onçš„æ—¶å€™èµ°è¿™é‡Œ,å› ä¸ºngx_http_copy_filter->ngx_output_chainä¸­ä¼šé‡æ–°
+            åˆ†é…å†…å­˜è¯»å–ç¼“å­˜æ–‡ä»¶å†…å®¹ï¼Œè§ngx_output_chain_as_isã€‚ä¹‹å‰buf->in_fileçš„å†…å®¹å°±ä¼šå˜å¥½å†…å­˜å‹çš„
+               */
+            n = ngx_writev(c, &header);
 
-        } else {
-         /*
-         ËµÃ÷chainÖĞµÄÊı¾İÔÚÄÚ´æÖĞ£¬Ò»°ã²»¿ªÆôsendfile onµÄÊ±ºò×ßÕâÀï,ÒòÎªngx_http_copy_filter->ngx_output_chainÖĞ»áÖØĞÂ
-         ·ÖÅäÄÚ´æ¶ÁÈ¡»º´æÎÄ¼şÄÚÈİ£¬¼ûngx_output_chain_as_is¡£Ö®Ç°buf->in_fileµÄÄÚÈİ¾Í»á±äºÃÄÚ´æĞÍµÄ
-            */n = ngx_writev(c, &header);
-
-            if (n == NGX_ERROR) {
+            if (n == NGX_ERROR)
+            {
                 return NGX_CHAIN_ERROR;
             }
 
@@ -369,13 +382,16 @@ ngx_linux_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
 
         in = ngx_chain_update_sent(in, sent);
 
-        if ((size_t) (send - prev_send) != sent) {
+        if ((size_t)(send - prev_send) != sent)
+        {
 #if (NGX_THREADS)
-            if (thread_handled) {
+            if (thread_handled)
+            {
                 return in;
             }
 
-            if (thread_complete) {
+            if (thread_complete)
+            {
                 send = prev_send + sent;
                 continue;
             }
@@ -384,26 +400,27 @@ ngx_linux_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
             return in;
         }
 
-        if (send >= limit || in == NULL) {
+        if (send >= limit || in == NULL)
+        {
             return in;
         }
     }
 }
 
 /*
-rocktmqÖĞ¶ÔÁã¿½±´µÄ½âÊÍ
-£¨1£©Áã¿½±´Ô­Àí£ºConsumerÏû·ÑÏûÏ¢¹ı³Ì£¬Ê¹ÓÃÁËÁã¿½±´£¬Áã¿½±´°üÀ¨Ò»ÏÂ2ÖĞ·½Ê½£¬RocketMQÊ¹ÓÃµÚÒ»ÖÖ·½Ê½£¬ÒòĞ¡¿éÊı¾İ´«ÊäµÄÒªÇóĞ§¹û±Èsendfile·½Ê½ºÃ
-    a )Ê¹ÓÃmmap+write·½Ê½   (mmap½«Ò»¸öÎÄ¼ş»òÕßÆäËü¶ÔÏóÓ³Éä½øÄÚ´æ)
-     ÓÅµã£º¼´Ê¹Æµ·±µ÷ÓÃ£¬Ê¹ÓÃĞ¡ÎÄ¼ş¿é´«Êä£¬Ğ§ÂÊÒ²ºÜ¸ß
-     È±µã£º²»ÄÜºÜºÃµÄÀûÓÃDMA·½Ê½£¬»á±Èsendfile¶àÏûºÄCPU×ÊÔ´£¬ÄÚ´æ°²È«ĞÔ¿ØÖÆ¸´ÔÓ£¬ĞèÒª±ÜÃâJVM CrashÎÊÌâ
-    b£©Ê¹ÓÃsendfile·½Ê½
-     ÓÅµã£º¿ÉÒÔÀûÓÃDMA·½Ê½£¬ÏûºÄCPU×ÊÔ´ÉÙ£¬´ó¿éÎÄ¼ş´«ÊäĞ§ÂÊ¸ß£¬ÎŞÄÚ´æ°²È«ĞÂÎÊÌâ
-     È±µã£ºĞ¡¿éÎÄ¼şĞ§ÂÊµÍÓÚmmap·½Ê½£¬Ö»ÄÜÊÇBIO·½Ê½´«Êä£¬²»ÄÜÊ¹ÓÃNIO
+rocktmqä¸­å¯¹é›¶æ‹·è´çš„è§£é‡Š
+ï¼ˆ1ï¼‰é›¶æ‹·è´åŸç†ï¼šConsumeræ¶ˆè´¹æ¶ˆæ¯è¿‡ç¨‹ï¼Œä½¿ç”¨äº†é›¶æ‹·è´ï¼Œé›¶æ‹·è´åŒ…æ‹¬ä¸€ä¸‹2ä¸­æ–¹å¼ï¼ŒRocketMQä½¿ç”¨ç¬¬ä¸€ç§æ–¹å¼ï¼Œå› å°å—æ•°æ®ä¼ è¾“çš„è¦æ±‚æ•ˆæœæ¯”sendfileæ–¹å¼å¥½
+    a )ä½¿ç”¨mmap+writeæ–¹å¼   (mmapå°†ä¸€ä¸ªæ–‡ä»¶æˆ–è€…å…¶å®ƒå¯¹è±¡æ˜ å°„è¿›å†…å­˜)
+     ä¼˜ç‚¹ï¼šå³ä½¿é¢‘ç¹è°ƒç”¨ï¼Œä½¿ç”¨å°æ–‡ä»¶å—ä¼ è¾“ï¼Œæ•ˆç‡ä¹Ÿå¾ˆé«˜
+     ç¼ºç‚¹ï¼šä¸èƒ½å¾ˆå¥½çš„åˆ©ç”¨DMAæ–¹å¼ï¼Œä¼šæ¯”sendfileå¤šæ¶ˆè€—CPUèµ„æºï¼Œå†…å­˜å®‰å…¨æ€§æ§åˆ¶å¤æ‚ï¼Œéœ€è¦é¿å…JVM Crashé—®é¢˜
+    bï¼‰ä½¿ç”¨sendfileæ–¹å¼
+     ä¼˜ç‚¹ï¼šå¯ä»¥åˆ©ç”¨DMAæ–¹å¼ï¼Œæ¶ˆè€—CPUèµ„æºå°‘ï¼Œå¤§å—æ–‡ä»¶ä¼ è¾“æ•ˆç‡é«˜ï¼Œæ— å†…å­˜å®‰å…¨æ–°é—®é¢˜
+     ç¼ºç‚¹ï¼šå°å—æ–‡ä»¶æ•ˆç‡ä½äºmmapæ–¹å¼ï¼Œåªèƒ½æ˜¯BIOæ–¹å¼ä¼ è¾“ï¼Œä¸èƒ½ä½¿ç”¨NIO
 
-    mmapÊÇÒ»ÖÖÄÚ´æÓ³ÉäÎÄ¼şµÄ·½·¨£¬¼´½«Ò»¸öÎÄ¼ş»òÕßÆäËü¶ÔÏóÓ³Éäµ½½ø³ÌµÄµØÖ·¿Õ¼ä£¬ÊµÏÖÎÄ¼ş´ÅÅÌµØÖ·ºÍ½ø³ÌĞéÄâµØÖ·¿Õ¼ä
-ÖĞÒ»¶ÎĞéÄâµØÖ·µÄÒ»Ò»¶ÔÓ³¹ØÏµ¡£ÊµÏÖÕâÑùµÄÓ³Éä¹ØÏµºó£¬½ø³Ì¾Í¿ÉÒÔ²ÉÓÃÖ¸ÕëµÄ·½Ê½¶ÁĞ´²Ù×÷ÕâÒ»¶ÎÄÚ´æ£¬¶øÏµÍ³»á×Ô¶¯»Ø
-Ğ´ÔàÒ³Ãæµ½¶ÔÓ¦µÄÎÄ¼ş´ÅÅÌÉÏ£¬¼´Íê³ÉÁË¶ÔÎÄ¼şµÄ²Ù×÷¶ø²»±ØÔÙµ÷ÓÃread,writeµÈÏµÍ³µ÷ÓÃº¯Êı¡£Ïà·´£¬ÄÚºË¿Õ¼ä¶ÔÕâ¶ÎÇøÓò
-µÄĞŞ¸ÄÒ²Ö±½Ó·´Ó³ÓÃ»§¿Õ¼ä£¬´Ó¶ø¿ÉÒÔÊµÏÖ²»Í¬½ø³Ì¼äµÄÎÄ¼ş¹²Ïí¡£
+    mmapæ˜¯ä¸€ç§å†…å­˜æ˜ å°„æ–‡ä»¶çš„æ–¹æ³•ï¼Œå³å°†ä¸€ä¸ªæ–‡ä»¶æˆ–è€…å…¶å®ƒå¯¹è±¡æ˜ å°„åˆ°è¿›ç¨‹çš„åœ°å€ç©ºé—´ï¼Œå®ç°æ–‡ä»¶ç£ç›˜åœ°å€å’Œè¿›ç¨‹è™šæ‹Ÿåœ°å€ç©ºé—´
+ä¸­ä¸€æ®µè™šæ‹Ÿåœ°å€çš„ä¸€ä¸€å¯¹æ˜ å…³ç³»ã€‚å®ç°è¿™æ ·çš„æ˜ å°„å…³ç³»åï¼Œè¿›ç¨‹å°±å¯ä»¥é‡‡ç”¨æŒ‡é’ˆçš„æ–¹å¼è¯»å†™æ“ä½œè¿™ä¸€æ®µå†…å­˜ï¼Œè€Œç³»ç»Ÿä¼šè‡ªåŠ¨å›
+å†™è„é¡µé¢åˆ°å¯¹åº”çš„æ–‡ä»¶ç£ç›˜ä¸Šï¼Œå³å®Œæˆäº†å¯¹æ–‡ä»¶çš„æ“ä½œè€Œä¸å¿…å†è°ƒç”¨read,writeç­‰ç³»ç»Ÿè°ƒç”¨å‡½æ•°ã€‚ç›¸åï¼Œå†…æ ¸ç©ºé—´å¯¹è¿™æ®µåŒºåŸŸ
+çš„ä¿®æ”¹ä¹Ÿç›´æ¥åæ˜ ç”¨æˆ·ç©ºé—´ï¼Œä»è€Œå¯ä»¥å®ç°ä¸åŒè¿›ç¨‹é—´çš„æ–‡ä»¶å…±äº«ã€‚
 
 
 http://www.linuxjournal.com/article/6345?page=0,0
@@ -413,32 +430,34 @@ static ssize_t
 ngx_linux_sendfile(ngx_connection_t *c, ngx_buf_t *file, size_t size)
 {
 #if (NGX_HAVE_SENDFILE64)
-    off_t      offset;
+    off_t offset;
 #else
-    int32_t    offset;
+    int32_t offset;
 #endif
-    ssize_t    n;
-    ngx_err_t  err;
+    ssize_t n;
+    ngx_err_t err;
 
 #if (NGX_HAVE_SENDFILE64)
     offset = file->file_pos;
 #else
-    offset = (int32_t) file->file_pos;
+    offset = (int32_t)file->file_pos;
 #endif
 
 eintr:
 
     ngx_log_debug2(NGX_LOG_DEBUG_EVENT, c->log, 0,
                    "sendfile: @%O %uz", file->file_pos, size);
-  //Ò»°ã´ó»º´æÎÄ¼şÓÃaio·¢ËÍ£¬Ğ¡ÎÄ¼şÓÃsendfile£¬ÒòÎªaioÊÇÒì²½µÄ£¬²»Ó°ÏìÆäËûÁ÷³Ì£¬µ«ÊÇsendfileÊÇÍ¬²½µÄ£¬Ì«´óµÄ»°¿ÉÄÜĞèÒª¶à´Îsendfile²ÅÄÜ·¢ËÍÍê£¬ÓĞÖÖ×èÈû¸Ğ¾õ
+    // ä¸€èˆ¬å¤§ç¼“å­˜æ–‡ä»¶ç”¨aioå‘é€ï¼Œå°æ–‡ä»¶ç”¨sendfileï¼Œå› ä¸ºaioæ˜¯å¼‚æ­¥çš„ï¼Œä¸å½±å“å…¶ä»–æµç¨‹ï¼Œä½†æ˜¯sendfileæ˜¯åŒæ­¥çš„ï¼Œå¤ªå¤§çš„è¯å¯èƒ½éœ€è¦å¤šæ¬¡sendfileæ‰èƒ½å‘é€å®Œï¼Œæœ‰ç§é˜»å¡æ„Ÿè§‰
 
-    //Ëü¼õÉÙÁËÄÚºËÌ¬ÓëÓÃ»§Ì¬Ö®¼äµÄÁ½´ÎÄÚ´æ¸´ÖÆ£¬ÕâÑù¾Í»á´Ó´ÅÅÌÖĞ¶ÁÈ¡ÎÄ¼şºóÖ±½ÓÔÚÄÚºËÌ¬·¢ËÍµ½Íø¿¨Éè±¸£¬
+    // å®ƒå‡å°‘äº†å†…æ ¸æ€ä¸ç”¨æˆ·æ€ä¹‹é—´çš„ä¸¤æ¬¡å†…å­˜å¤åˆ¶ï¼Œè¿™æ ·å°±ä¼šä»ç£ç›˜ä¸­è¯»å–æ–‡ä»¶åç›´æ¥åœ¨å†…æ ¸æ€å‘é€åˆ°ç½‘å¡è®¾å¤‡ï¼Œ
     n = sendfile(c->fd, file->file->fd, &offset, size);
 
-    if (n == -1) {
+    if (n == -1)
+    {
         err = ngx_errno;
 
-        switch (err) {
+        switch (err)
+        {
         case NGX_EAGAIN:
             ngx_log_debug0(NGX_LOG_DEBUG_EVENT, c->log, err,
                            "sendfile() is not ready");
@@ -462,27 +481,26 @@ eintr:
     return n;
 }
 
-
 #if (NGX_THREADS)
-//ngx_linux_sendfile_threadÖĞ´´½¨¿Õ¼äºÍ¸³Öµ
-typedef struct {
-    ngx_buf_t     *file;
-    ngx_socket_t   socket;
-    size_t         size;
+// ngx_linux_sendfile_threadä¸­åˆ›å»ºç©ºé—´å’Œèµ‹å€¼
+typedef struct
+{
+    ngx_buf_t *file;
+    ngx_socket_t socket;
+    size_t size;
 
-    size_t         sent;
-    ngx_err_t      err;
+    size_t sent;
+    ngx_err_t err;
 } ngx_linux_sendfile_ctx_t;
-
 
 static ngx_int_t
 ngx_linux_sendfile_thread(ngx_connection_t *c, ngx_buf_t *file, size_t size,
-    size_t *sent)
+                          size_t *sent)
 {
-    ngx_uint_t                 flags;
-    ngx_event_t               *wev;
-    ngx_thread_task_t         *task;
-    ngx_linux_sendfile_ctx_t  *ctx;
+    ngx_uint_t flags;
+    ngx_event_t *wev;
+    ngx_thread_task_t *task;
+    ngx_linux_sendfile_ctx_t *ctx;
 
     ngx_log_debug3(NGX_LOG_DEBUG_CORE, c->log, 0,
                    "linux sendfile thread: %d, %uz, %O",
@@ -490,9 +508,11 @@ ngx_linux_sendfile_thread(ngx_connection_t *c, ngx_buf_t *file, size_t size,
 
     task = c->sendfile_task;
 
-    if (task == NULL) {
+    if (task == NULL)
+    {
         task = ngx_thread_task_alloc(c->pool, sizeof(ngx_linux_sendfile_ctx_t));
-        if (task == NULL) {
+        if (task == NULL)
+        {
             return NGX_ERROR;
         }
 
@@ -504,10 +524,12 @@ ngx_linux_sendfile_thread(ngx_connection_t *c, ngx_buf_t *file, size_t size,
     ctx = task->ctx;
     wev = c->write;
 
-    if (task->event.complete) {
+    if (task->event.complete)
+    {
         task->event.complete = 0;
 
-        if (ctx->err && ctx->err != NGX_EAGAIN) {
+        if (ctx->err && ctx->err != NGX_EAGAIN)
+        {
             wev->error = 1;
             ngx_connection_error(c, ctx->err, "sendfile() failed");
             return NGX_ERROR;
@@ -522,16 +544,19 @@ ngx_linux_sendfile_thread(ngx_connection_t *c, ngx_buf_t *file, size_t size,
     ctx->socket = c->fd;
     ctx->size = size;
 
-    if (wev->active) {
+    if (wev->active)
+    {
         flags = (ngx_event_flags & NGX_USE_CLEAR_EVENT) ? NGX_CLEAR_EVENT
                                                         : NGX_LEVEL_EVENT;
 
-        if (ngx_del_event(wev, NGX_WRITE_EVENT, flags) == NGX_ERROR) {
+        if (ngx_del_event(wev, NGX_WRITE_EVENT, flags) == NGX_ERROR)
+        {
             return NGX_ERROR;
         }
     }
 
-    if (file->file->thread_handler(task, file->file) != NGX_OK) {
+    if (file->file->thread_handler(task, file->file) != NGX_OK)
+    {
         return NGX_ERROR;
     }
 
@@ -540,15 +565,14 @@ ngx_linux_sendfile_thread(ngx_connection_t *c, ngx_buf_t *file, size_t size,
     return NGX_OK;
 }
 
-
 static void
 ngx_linux_sendfile_thread_handler(void *data, ngx_log_t *log)
 {
     ngx_linux_sendfile_ctx_t *ctx = data;
 
-    off_t       offset;
-    ssize_t     n;
-    ngx_buf_t  *file;
+    off_t offset;
+    ssize_t n;
+    ngx_buf_t *file;
 
     ngx_log_debug0(NGX_LOG_DEBUG_CORE, log, 0, "linux sendfile thread handler");
 
@@ -559,10 +583,12 @@ again:
 
     n = sendfile(ctx->socket, file->file->fd, &offset, ctx->size);
 
-    if (n == -1) {
+    if (n == -1)
+    {
         ctx->err = ngx_errno;
-
-    } else {
+    }
+    else
+    {
         ctx->sent = n;
         ctx->err = 0;
     }
@@ -575,7 +601,8 @@ again:
                    "sendfile: %z (err: %i) of %uz @%O",
                    n, ctx->err, ctx->size, file->file_pos);
 
-    if (ctx->err == NGX_EINTR) {
+    if (ctx->err == NGX_EINTR)
+    {
         goto again;
     }
 }
