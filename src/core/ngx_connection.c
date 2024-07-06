@@ -1249,6 +1249,7 @@ void ngx_reusable_connection(ngx_connection_t *c, ngx_uint_t reusable) // 和下
     ngx_log_debug1(NGX_LOG_DEBUG_CORE, c->log, 0,
                    "reusable connection: %ui", reusable);
 
+    //TIP: 从 ngx_cycle->reusable_connections_queue 移除
     if (c->reusable)
     {
         ngx_queue_remove(&c->queue);
@@ -1260,6 +1261,7 @@ void ngx_reusable_connection(ngx_connection_t *c, ngx_uint_t reusable) // 和下
 
     c->reusable = reusable;
 
+    //TIP: 添加到 ngx_cycle->reusable_connections_queue
     if (reusable)
     {
         /* need cast as ngx_cycle is volatile */

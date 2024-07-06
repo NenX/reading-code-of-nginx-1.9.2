@@ -1546,7 +1546,7 @@ ngx_epoll_del_connection(ngx_connection_t *c, ngx_uint_t flags)
      */
 
     if (flags & NGX_CLOSE_EVENT)
-    { // 如果该函数紧接着会调用close(fd)，那么就不用epoll del了，系统会自动del
+    { //TIP: flags 为 NGX_CLOSE_EVENT，即说明紧接着会调用close(fd)，那么就不用epoll del了，系统会自动del
         c->read->active = 0;
         c->write->active = 0;
         return NGX_OK;

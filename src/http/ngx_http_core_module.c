@@ -4139,7 +4139,7 @@ ngx_http_subrequest(ngx_http_request_t *r,
         而不是第三次父请求，parent指向第三层父请求 */
     sr->main = r->main;
     sr->parent = r;
-
+    //TIP: 当调用ngx_http_finalize_request结束子请求时，执行该ps->shandler函数
     sr->post_subrequest = ps; /* 保存回调handler及数据，在子请求执行完，将会调用 */
 
     /* 读事件handler赋值为不做任何事的函数，因为子请求不用再读数据或者检查连接状态；

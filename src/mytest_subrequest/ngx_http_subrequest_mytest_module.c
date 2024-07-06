@@ -97,6 +97,9 @@ static ngx_int_t mytest_subrequest_post_handler(ngx_http_request_t *r,
 
     // 这一步很重要，设置接下来父请求的回调方法   子请求接收完自己负责的那部分后端响应后，就通知父请求进行相应的处理
     //(例如多个不同的子请求分别对应后端多个不同的服务器，各个后端应答回来后就需要通知父请求就行合并等操作，
+    //TIP: 当调用ngx_http_finalize_request结束子请求时，执行该ps->shandler函数(即当前的函数)
+    //TIP: 再调用 ngx_http_post_requet 将主请求添加到r->main->posted_requests
+    //TIP: ngx_http_finalize_request结束后，调用 ngx_http_run_posted_requests 执行主请求的 write_event_handler
     pr->write_event_handler = mytest_post_handler; // ngx_http_core_run_phases中执行
 
     return NGX_OK;
@@ -176,7 +179,7 @@ ngx_http_subrequest_mytest_handler(ngx_http_request_t *r)
 {
 
     // ngx_http_read_client_request_body(r, ngx_http_echo_post_read_request_body);
-    ngx_http_discard_request_body(r);
+    // ngx_http_discard_request_body(r);
     // 创建http上下文
     ngx_http_subrequest_mytest_ctx_t *myctx = ngx_http_get_module_ctx(r, ngx_http_subrequest_mytest_module);
     if (myctx == NULL)
@@ -199,9 +202,9 @@ ngx_http_subrequest_mytest_handler(ngx_http_request_t *r)
     }
 
     // 设置子请求回调方法为mytest_subrequest_post_handler
-    /*
-    当读取完该子请求后端应答的数据后，会调用ngx_http_upstream_finalize_request->ngx_http_finalize_request，在ngx_http_finalize_request中执行该handler函数
-    */
+
+    //TIP: 当读取完该子请求后端应答的数据后，会调用ngx_http_upstream_finalize_request->ngx_http_finalize_request，在ngx_http_finalize_request中执行该handler函数
+
     psr->handler = mytest_subrequest_post_handler;
 
     // data设为myctx上下文，这样回调mytest_subrequest_post_handler时传入的data参数就是myctx
@@ -209,7 +212,7 @@ ngx_http_subrequest_mytest_handler(ngx_http_request_t *r)
 
     // 子请求的URI前缀是/list，这是因为访问新浪服务器的请求必须是类
     // 似/list=s_sh000001这样的URI，
-    ngx_str_t sub_prefix = ngx_string("/list=");
+    ngx_str_t sub_prefix = ngx_string("/list");
     ngx_str_t sub_location;
     sub_location.len = sub_prefix.len + r->args.len;
     sub_location.data = ngx_palloc(r->pool, sub_location.len);

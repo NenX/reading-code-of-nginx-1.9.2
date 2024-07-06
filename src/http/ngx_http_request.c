@@ -1602,9 +1602,9 @@ ngx_http_read_request_header(ngx_http_request_t *r)
     { // 在ngx_http_wait_request_handler中会首先读取一次，这里一般是大于0的
         return n;
     }
-
+    //!!!: 如果来自对端的数据还没有读取获取还没有读完，则继续读
     if (rev->ready)
-    { // 如果来自对端的数据还没有读取获取还没有读完，则继续读
+    { 
         n = c->recv(c, r->header_in->last,
                     r->header_in->end - r->header_in->last); // ngx_unix_recv
     }
@@ -2734,8 +2734,9 @@ ngx_http_run_posted_requests(ngx_connection_t *c) // 执行r->main->posted_reque
     }
 }
 
-// 把pr添加到r->main->posted_requests尾部
-ngx_int_t // ngx_http_post_request将该子请求挂载在主请求的posted_requests链表队尾，在ngx_http_run_posted_requests中执行
+ //TIP: 将子请求（ngx_http_subrequest）或主请求（子请求调用ngx_http_finalize_request时,为什么?）挂载在主请求的posted_requests链表队尾
+ //TIP: 在ngx_http_run_posted_requests中执行
+ngx_int_t
 ngx_http_post_request(ngx_http_request_t *r, ngx_http_posted_request_t *pr)
 { // 注意是把新创建的ngx_http_posted_request_t添加到最上层r的posted_requests中(例如现在是第四层r，则最上层是第一次r，而不是第三层r)
     ngx_http_posted_request_t **p;
