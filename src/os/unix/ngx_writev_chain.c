@@ -232,6 +232,7 @@ eintr:
     //readv 和writev可以一下读写多个缓冲区的内容，read和write只能一下读写一个缓冲区的内容； 
     /* On success, the readv() function returns the number of bytes read; the writev() function returns the number of bytes written.  
         On error, -1 is returned, and errno is  set appropriately. readv返回被读的字节总数。如果没有更多数据和碰到文件末尾时返回0的计数。 */
+    //!!!: 最终向客户端socket写入的地方
     n = writev(c->fd, vec->iovs, vec->count);
 
     ngx_log_debug2(NGX_LOG_DEBUG_EVENT, c->log, 0,
