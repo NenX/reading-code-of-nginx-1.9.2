@@ -2823,9 +2823,9 @@ void ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
 
     /*
     检查当前请求是否为subrequest子请求，如果是子请求，那么调用post_subrequest下的handler回调方法。subrequest的用法，可以看
-    到post_subrequest正是此时被调用的。
-     */
-    /* 如果当前请求是一个子请求，检查它是否有回调handler，有的话执行之 */
+    到post_subrequest正是此时被调用的。*/
+     
+    //!!!: ngx_http_finalize_request 中, 如果是一个子请求，调用 post_subrequest->handler, sr->post_subrequest 在哪设置？
     if (r != r->main && r->post_subrequest)
     {                                                                      // 如果当前请求属于某个原始请求的子请求
         rc = r->post_subrequest->handler(r, r->post_subrequest->data, rc); // r变量是子请求（不是父请求）
@@ -2926,8 +2926,8 @@ void ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
             |
             |               next
           sub11_r(data11)-----------sub12_r(data12)
-
      */
+        // 非主请求
         if (r == c->data)
         {
             // 这个优先级最高的子请求数据发送完毕了，则直接从pr->postponed中摘除，例如这次摘除的是sub11_r，则下个优先级最高发送客户端数据的是sub12_r
@@ -2995,7 +2995,7 @@ void ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
         ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0,
                        "http wake parent request: \"%V?%V\"",
                        &pr->uri, &pr->args);
-
+        //TIP: 非主请求判断结束，并返回
         return;
     }
 
@@ -4156,8 +4156,8 @@ ngx_http_send_special(ngx_http_request_t *r, ngx_uint_t flags)
     ngx_int_t last_in_chain = b->last_in_chain;
     ngx_int_t flush = b->flush;
 
-    ngx_log_debugall(r->connection->log, 0, "ngx http send special, flags:%ui, last_buf:%i, sync:%i, last_in_chain:%i, flush:%i",
-                     flags, last_buf, sync, last_in_chain, flush);
+    // ngx_log_debugall(r->connection->log, 0, "ngx http send special, flags:%ui, last_buf:%i, sync:%i, last_in_chain:%i, flush:%i",
+    //                  flags, last_buf, sync, last_in_chain, flush);
     return ngx_http_output_filter(r, &out);
 }
 
@@ -4503,7 +4503,7 @@ void ngx_http_close_connection(ngx_connection_t *c)
 
     ngx_destroy_pool(pool);
 }
-
+//TIP: 在 ngx_http_init_connection 中 c->log->handler = ngx_http_log_error;
 static u_char *
 ngx_http_log_error(ngx_log_t *log, u_char *buf, size_t len)
 {
@@ -4520,7 +4520,7 @@ ngx_http_log_error(ngx_log_t *log, u_char *buf, size_t len)
 
     ctx = log->data;
 
-    p = ngx_snprintf(buf, len, ", client: %V", &ctx->connection->addr_text);
+    p = ngx_snprintf(buf, len, ", fuck_log client: %V", &ctx->connection->addr_text);
     len -= p - buf;
 
     r = ctx->request;

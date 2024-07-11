@@ -48,10 +48,12 @@ struct ngx_event_s {
     void            *data;  //赋值见ngx_get_connection
 
     //标志位，为1时表示事件是可写的。通常情况下，它表示对应的TCP连接目前状态是可写的，也就是连接处于可以发送网络包的状态
+    //!!!: 在 ngx_http_request_handler、ngx_http_upstream_handler 中依据 ev->right 调用 r->write_event_handler 或者 r->read_event_handler。在 ngx_get_connection 中设置
     unsigned         write:1; //见ngx_get_connection，可写事件ev默认为1  读ev事件应该默认还是0
 
     //标志位，为1时表示为此事件可以建立新的连接。通常情况下，在ngx_cycle_t中的listening动态数组中，每一个监听对象ngx_listening_t对
     //应的读事件中的accept标志位才会是l  ngx_event_process_init中置1
+    ///!!!: 在 ngx_epoll_process_events 中根据 rev->accept 将事件插入到 ngx_posted_accept_events 或者 ngx_posted_events，在 ngx_event_process_init 中设置
     unsigned         accept:1;
 
     /*

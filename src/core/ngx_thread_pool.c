@@ -282,7 +282,7 @@ ngx_thread_task_post(ngx_thread_pool_t *tp, ngx_thread_task_t *task)
 
     task->id = ngx_thread_pool_task_id++;
     task->next = NULL;
-    ngx_log_debugall(tp->log, 0, "ngx add task to thread, task id:%ui", task->id);
+    // ngx_log_debugall(tp->log, 0, "ngx add task to thread, task id:%ui", task->id);
 
     if (ngx_thread_cond_signal(&tp->cond, tp->log) != NGX_OK) {
         (void) ngx_thread_mutex_unlock(&tp->mtx, tp->log);

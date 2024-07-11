@@ -3438,7 +3438,7 @@ ngx_http_send_header(ngx_http_request_t *r)
         return NGX_OK;
     }
 
-    ngx_log_debugall(r->connection->log, 0, "ngx http send header");
+    // ngx_log_debugall(r->connection->log, 0, "ngx http send header");
     if (r->header_sent)
     {
         ngx_log_error(NGX_LOG_ALERT, r->connection->log, 0,
@@ -4166,7 +4166,7 @@ ngx_http_subrequest(ngx_http_request_t *r,
     // 注意:在创建子请求的过程中并没有创建新的ngx_connection_t，也就是始终用的root请求的ngx_connection_t
     if (c->data == r && r->postponed == NULL)
     {                 // 说明是r还没有子请求，在创建r的第一个子请求，例如第二层r的第一个子请求就是第三层r
-        c->data = sr; /* 最终客户端请求r->connection->data指向最下层左边的子请求 */
+        c->data = sr; /*!!!: 最终客户端请求r->connection->data指向最下层左边的子请求 */
     }
 
     /*

@@ -411,7 +411,7 @@ ngx_http_copy_aio_event_handler(ngx_event_t *ev)
     r->main->blocked--;  
     r->aio = 0;//aio on方式下，异步读取数据读取完毕，则置0
 
-    ngx_log_debugall(r->connection->log, 0, "ngx http aio on event handler");
+    // ngx_log_debugall(r->connection->log, 0, "ngx http aio on event handler");
 
     //ngx_http_request_handler -> ngx_http_writer   ngx_http_set_write_handler中设置为ngx_http_writer
     r->connection->write->handler(r->connection->write); //触发一次write->handler，从而可以把从ngx_file_aio_read读到的数据发送出去

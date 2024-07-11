@@ -366,8 +366,8 @@ void traversal(ngx_conf_t *cf, ngx_http_location_tree_node_t* node)
         if (loc != NULL)
         {
             ngx_http_mytest_config_conf_t  *mycf = (ngx_http_mytest_config_conf_t  *)loc->loc_conf[ngx_http_mytest_config_module.ctx_index];
-            ngx_log_error(NGX_LOG_ALERT, cf->log, 0, "in location[name=%V]{} test_str=%V",
-                          &loc->name, &mycf->my_str);
+            // ngx_log_error(NGX_LOG_ALERT, cf->log, 0, "in location[name=%V]{} test_str=%V",
+            //               &loc->name, &mycf->my_str);
         }
         else
         {
@@ -394,7 +394,7 @@ ngx_http_mytest_config_post_conf(ngx_conf_t *cf)
 
     ngx_http_mytest_config_conf_t  *mycf;
     mycf = (ngx_http_mytest_config_conf_t  *)http_root_conf->loc_conf[ngx_http_mytest_config_module.ctx_index];
-    ngx_log_error(NGX_LOG_ALERT, cf->log, 0, "in http{} test_str=%V", &mycf->my_str);
+    // ngx_log_error(NGX_LOG_ALERT, cf->log, 0, "in http{} test_str=%V", &mycf->my_str);
 
     ngx_http_core_main_conf_t* core_main_conf = (ngx_http_core_main_conf_t*)
                                                 http_root_conf->main_conf[ngx_http_core_module.ctx_index];
@@ -404,8 +404,8 @@ ngx_http_mytest_config_post_conf(ngx_conf_t *cf)
         ngx_http_core_srv_conf_t* tmpcoresrv = *((ngx_http_core_srv_conf_t**)
                                                  (core_main_conf->servers.elts) + i);
         mycf = (ngx_http_mytest_config_conf_t  *)tmpcoresrv->ctx->loc_conf[ngx_http_mytest_config_module.ctx_index];
-        ngx_log_error(NGX_LOG_ALERT, cf->log, 0, "in server[name=%V]{} test_str=%V",
-                      &tmpcoresrv->server_name, &mycf->my_str);
+        // ngx_log_error(NGX_LOG_ALERT, cf->log, 0, "in server[name=%V]{} test_str=%V",
+        //               &tmpcoresrv->server_name, &mycf->my_str);
 
         ngx_http_core_loc_conf_t* tmpcoreloc = (ngx_http_core_loc_conf_t*)
                                                tmpcoresrv->ctx->loc_conf[ngx_http_core_module.ctx_index];

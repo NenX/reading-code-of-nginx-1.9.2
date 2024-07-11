@@ -244,8 +244,11 @@ struct ngx_connection_s {  //cycle->read_events和cycle->write_events这两个�
     在子请求处理过程中，上层父请求r的data指向第一个r下层的子请求，例如第二层的r->connection->data指向其第三层的第一个
  创建的子请求r，c->data = sr见ngx_http_subrequest,在subrequest往客户端发送数据的时候，只有data指向的节点可以先发送出去
     listen过程中，指向原始请求ngx_http_connection_t(ngx_http_init_connection ngx_http_ssl_handshake),接收到客户端数据后指向ngx_http_request_t(ngx_http_wait_request_handler)
-    http2协议的过程中，在ngx_http_v2_connection_t(ngx_http_v2_init)
- */
+    http2协议的过程中，在ngx_http_v2_connection_t(ngx_http_v2_init)  */
+    //!!!: ngx_event_process_init 中 c[i].data 指向下一个 ngx_connnection_t
+    //!!!: ngx_http_init_connection 中 c->data = ngx_http_connection_t
+    //!!!: ngx_http_wait_request_handler 中 c->data = ngx_http_request_t 
+    //!!!: ngx_http_subrequest 中, 如果 (c->data == r && r->postponed == NULL)，则 c->data = sr，说明 c->data 指向 r->postponed->request->postponed->request...
     void               *data; /* 如果是subrequest，则data最终指向最下层子请求r,见ngx_http_subrequest */
     //如果是文件异步i/o中的ngx_event_aio_t，则它来自ngx_event_aio_t->ngx_event_t(只有读),如果是网络事件中的event,则为ngx_connection_s中的event(包括读和写)
     ngx_event_t        *read;//连接对应的读事件   赋值在ngx_event_process_init，空间是从ngx_cycle_t->read_event池子中获取的
@@ -266,10 +269,10 @@ struct ngx_connection_s {  //cycle->read_events和cycle->write_events这两个�
 
     //这个连接对应的ngx_listening_t监听对象,通过listen配置项配置，此连接由listening监听端口的事件建立,赋值在ngx_event_process_init
     //接收到客户端连接后会冲连接池分配一个ngx_connection_s结构，其listening成员指向服务器接受该连接的listen信息结构，见ngx_event_accept
-    ngx_listening_t    *listening; //实际上是从cycle->listening.elts中的一个ngx_listening_t   
+    ngx_listening_t    *listening; //TIP: c->listening 两处赋值在？实际上是从cycle->listening.elts中的一个ngx_listening_t   
 
     off_t               sent;//这个连接上已经发送出去的字节数 //ngx_linux_sendfile_chain和ngx_writev_chain没发送多少字节就加多少字节
-
+    //TIP: 在 ngx_http_init_connection 中 c->log->handler = ngx_http_log_error;
     ngx_log_t          *log;//可以记录日志的ngx_log_t对象 其实就是ngx_listening_t中获取的log //赋值见ngx_event_accept
 
     /*

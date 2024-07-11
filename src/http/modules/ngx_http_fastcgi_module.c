@@ -2840,7 +2840,7 @@ ngx_http_fastcgi_input_filter(ngx_event_pipe_t *p, ngx_buf_t *buf)
 
     int upstream_done = p->upstream_done;
     if(upstream_done)
-        ngx_log_debugall(p->log, 0, "fastcgi input filter upstream_done:%d", upstream_done);
+        // ngx_log_debugall(p->log, 0, "fastcgi input filter upstream_done:%d", upstream_done);
 
     if (b) { //刚才已经解析到了数据部分。
         b->shadow = buf; //buf是b的影子，前面有设置buf->shadow=b

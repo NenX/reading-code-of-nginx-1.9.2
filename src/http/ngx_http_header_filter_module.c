@@ -687,7 +687,7 @@ ngx_http_header_filter(ngx_http_request_t *r)
 
     out.buf = b;
     out.next = NULL;
-
+    //!!!: ngx_http_send_header 最终通过 ngx_http_write_filter 发送数据
     return ngx_http_write_filter(r, &out);
 }
 

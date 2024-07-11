@@ -153,7 +153,7 @@ ngx_output_chain(ngx_output_chain_ctx_t *ctx, ngx_chain_t *in) // in为需要发
 #endif
     ngx_uint_t directio = ctx->directio;
 #if (NGX_HAVE_FILE_AIO)
-    ngx_log_debugall(ctx->pool->log, 0, "ctx->sendfile:%ui, ctx->aio:%ui, ctx->directio:%ui", sendfile, aio, directio);
+    // ngx_log_debugall(ctx->pool->log, 0, "ctx->sendfile:%ui, ctx->aio:%ui, ctx->directio:%ui", sendfile, aio, directio);
 #endif
     if (ctx->in == NULL && ctx->busy == NULL
 #if (NGX_HAVE_FILE_AIO || NGX_THREADS)
@@ -169,8 +169,8 @@ ngx_output_chain(ngx_output_chain_ctx_t *ctx, ngx_chain_t *in) // in为需要发
 
         if (in == NULL)
         { // 如果要发送的数据为空，也就是啥也不用发送。那就直接调用output_filter的了。
-            ngx_log_debugall(ctx->pool->log, 0, "ngx output chain, in = NULL");
-            return ctx->output_filter(ctx->filter_ctx, in);
+            // ngx_log_debugall(ctx->pool->log, 0, "ngx output chain, in = NULL");
+            // return ctx->output_filter(ctx->filter_ctx, in);
         }
 
         if (in->next == NULL // 说明发送buf只有一个
@@ -179,7 +179,7 @@ ngx_output_chain(ngx_output_chain_ctx_t *ctx, ngx_chain_t *in) // in为需要发
 #endif
             && ngx_output_chain_as_is(ctx, in->buf)) // 这个函数主要用来判断是否需要复制buf。返回1,表示不需要拷贝，否则为需要拷贝
         {
-            ngx_log_debugall(ctx->pool->log, 0, "only one chain buf to output_filter");
+            // ngx_log_debugall(ctx->pool->log, 0, "only one chain buf to output_filter");
             return ctx->output_filter(ctx->filter_ctx, in);
         }
     }
@@ -212,8 +212,8 @@ ngx_output_chain(ngx_output_chain_ctx_t *ctx, ngx_chain_t *in) // in为需要发
         // 开始读取数据的时候置1，一定要等到aio on模式情况下的内核异步读完成或者aio thread_pool模式下的线程读数据完成，并且通过notify_epoll通知触发了新epoll_in的时候重新置0，表示数据读取完毕，只有条件满足才能发送数据write
         if (ctx->aio)
         { // 如果是aio，则由内核完成READ，read成功后会epoll触发返回，执行在ngx_file_aio_event_handler
-            ngx_log_debugall(ctx->pool->log, 0, "ctx->aio = 1, wait AIO kernel complete read or wait thread pool to read complete");
-            return NGX_AGAIN;
+            // ngx_log_debugall(ctx->pool->log, 0, "ctx->aio = 1, wait AIO kernel complete read or wait thread pool to read complete");
+            // return NGX_AGAIN;
         }
 #endif
         // 结合ngx_http_xxx_create_request(ngx_http_fastcgi_create_request)阅读，ctx->in中的数据实际上是从ngx_http_xxx_create_request组成ngx_chain_t来的，数据来源在ngx_http_xxx_create_request
@@ -418,17 +418,17 @@ ngx_output_chain_as_is(ngx_output_chain_ctx_t *ctx, ngx_buf_t *buf) // ngx_outpu
     if (buf->in_file)
     {
         unsigned int directio = buf->file->directio;
-        ngx_log_debugall(ngx_cycle->log, 0,
-                         "ngx_output_chain_as_is--- buf_special:%ui, in_file:%ui, directio:%ui, buf_in_mem:%ui,"
-                         "need_in_memory:%ui, need_in_temp:%ui, memory:%ui, mmap:%ui",
-                         buf_special, in_file, directio, buf_in_mem, need_in_memory, need_in_temp, memory, mmap);
+        // ngx_log_debugall(ngx_cycle->log, 0,
+        //                  "ngx_output_chain_as_is--- buf_special:%ui, in_file:%ui, directio:%ui, buf_in_mem:%ui,"
+        //                  "need_in_memory:%ui, need_in_temp:%ui, memory:%ui, mmap:%ui",
+        //                  buf_special, in_file, directio, buf_in_mem, need_in_memory, need_in_temp, memory, mmap);
     }
     else
     {
-        ngx_log_debugall(ngx_cycle->log, 0,
-                         "ngx_output_chain_as_is--- buf_special:%ui, in_file:%ui, buf_in_mem:%ui,"
-                         "need_in_memory:%ui, need_in_temp:%ui, memory:%ui, mmap:%ui",
-                         buf_special, in_file, buf_in_mem, need_in_memory, need_in_temp, memory, mmap);
+        // ngx_log_debugall(ngx_cycle->log, 0,
+        //                  "ngx_output_chain_as_is--- buf_special:%ui, in_file:%ui, buf_in_mem:%ui,"
+        //                  "need_in_memory:%ui, need_in_temp:%ui, memory:%ui, mmap:%ui",
+        //                  buf_special, in_file, buf_in_mem, need_in_memory, need_in_temp, memory, mmap);
     }
 
     if (ngx_buf_special(buf))

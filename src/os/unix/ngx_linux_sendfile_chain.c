@@ -195,7 +195,7 @@ ngx_linux_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
     ngx_uint_t thread_handled, thread_complete;
 #endif
 
-    ngx_log_debugall(c->log, 0, "@@@@@@@@@@@@@@@@@@@@@@@begin ngx_linux_sendfile_chain @@@@@@@@@@@@@@@@@@@");
+    // ngx_log_debugall(c->log, 0, "@@@@@@@@@@@@@@@@@@@@@@@begin ngx_linux_sendfile_chain @@@@@@@@@@@@@@@@@@@");
     wev = c->write;
 
     if (!wev->ready)

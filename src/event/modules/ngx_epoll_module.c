@@ -1394,7 +1394,7 @@ ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags) // 该�
         events = EPOLLOUT;
 #endif
     }
-
+    //TIP: e 为另一种事件, 如果 e->active 说明当前的fd已经添加到eopll里面，此时需要 EPOLL_CTL_MOD
     // 第一次添加epoll_ctl为EPOLL_CTL_ADD,如果再次添加发现active为1,则epoll_ctl为EPOLL_CTL_MOD
     if (e->active)
     { // 根据active标志位确定是否为活跃事件，以决定到底是修改还是添加事件
